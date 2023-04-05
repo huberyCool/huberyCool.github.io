@@ -191,7 +191,7 @@
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #ffa2c4">java</a>
+                <a href="/tags/java/" style="color: #00bcd4">java</a>
             </span>
             
         </span>
@@ -202,7 +202,69 @@
         <p>接上一篇 <a href="/2023/04/04/JVM%E4%B8%8A%E7%AF%87-%E6%9C%AC%E5%9C%B0%E6%96%B9%E6%B3%95%E6%8E%A5%E5%8F%A3%E5%92%8C%E6%9C%AC%E5%9C%B0%E6%96%B9%E6%B3%95%E6%A0%88(5)/">JVM上篇-本地方法接口和本地方法栈(5)</a></p>
 <span id="more"></span>
 
-<h2 id="堆"><a href="#堆" class="headerlink" title="堆"></a>堆</h2><h3 id="1-核心概述"><a href="#1-核心概述" class="headerlink" title="1. 核心概述"></a>1. 核心概述</h3>
+<h2 id="堆"><a href="#堆" class="headerlink" title="堆"></a>堆</h2><h3 id="1-核心概述"><a href="#1-核心概述" class="headerlink" title="1. 核心概述"></a>1. 核心概述</h3><p>堆针对一个JVM进程来说是唯一的，但是进程包含多个线程，所以堆不是线程私有的，是共享的</p>
+<p>堆也是java内存管理的核心区域</p>
+<p>堆区在JVM启动的时候即被创建，其空间大小也就被确定了。(堆内存的大小是可以调节的)</p>
+<p>堆是JVM管理的最大一块内存空间</p>
+<p>《java虚拟机规范》规定，堆可以处于物理上不联系的内存空间，但是逻辑上它应该被视为连续的</p>
+<p>堆上还可以划分线程私有的缓冲区(Thread Local Allocation Buffer - TLAB)</p>
+<p>《java虚拟机规范》中对堆的描述</p>
+<blockquote>
+<p>所有的对象实例以及数组都应该在运行时分配在堆上</p>
+</blockquote>
+<p>一个方法开始执行，创建栈帧，方法中的数组和对象会在堆中创建，栈帧中保存的是其指向堆中对应位置的引用，方法结束后，堆中的对象不会马上被移除，而是等待垃圾收集器来回收</p>
+<p>堆，是GC(Garbage Collection) 执行垃圾回收的重点区域</p>
+<h4 id="1-1-堆内存细分"><a href="#1-1-堆内存细分" class="headerlink" title="1.1 堆内存细分"></a>1.1 堆内存细分</h4><p>Java7及之前</p>
+<ul>
+<li>新生代(Young Generation Space)<ul>
+<li>Eden区</li>
+<li>Survivor区<ul>
+<li>S0区</li>
+<li>S1区</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>老年代(Tenure Generation Space)</li>
+<li>永久代(Permanent Space)</li>
+</ul>
+<p>Java8及之后</p>
+<ul>
+<li>新生代(Young Generation Space)<ul>
+<li>Eden区</li>
+<li>Survivor区<ul>
+<li>S0区</li>
+<li>S1区</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>老年代(Tenure Generation Space)</li>
+<li>元空间(Meta Space)</li>
+</ul>
+<blockquote>
+<p>默认情况下空间占比 Eden:S0:S1 &#x3D; 8:1:1<br>新生代:老年代 &#x3D; 1:2</p>
+</blockquote>
+<h4 id="1-2-堆内存设置"><a href="#1-2-堆内存设置" class="headerlink" title="1.2 堆内存设置"></a>1.2 堆内存设置</h4><p>java堆区用于存储java对象实例，那么堆的大小在JVM启动时就已经设定好了，可以通过一下选项来设置其内存大小</p>
+<ul>
+<li>-Xms(-XX:InitialHeapSize) 用于表示堆区的起始内存</li>
+<li>-Xmx(-XX:MaxHeapSize) 用于表示堆区的最大内存</li>
+</ul>
+<p>一旦堆区中的内存大小超过-Xmx所设定的最大内存时，将会抛出OOM(OutOfMemoryError)异常</p>
+<p>通常会将-Xms和-Xmx两个参数设置相同的值，其目的是为了能够在java垃圾回收机制清理完堆区后不需要重新分割计算堆区的大小，从而提高性能</p>
+<p>默认情况下</p>
+<ul>
+<li>初始内存大小： 物理机电脑内存大小 &#x2F; 64</li>
+<li>最大内存大小： 物理机电脑内存大小 &#x2F; 4</li>
+</ul>
+<h4 id="1-3-年轻代和老年代"><a href="#1-3-年轻代和老年代" class="headerlink" title="1.3 年轻代和老年代"></a>1.3 年轻代和老年代</h4><p>存储在JVM中的对象可以划分为两类</p>
+<ul>
+<li>生命周期较短的瞬时对象，这类对象的创建和消亡都非常迅速</li>
+<li>生命周期非常长的，在某些极端情况下还能够与JVM的生命周期保持一致</li>
+</ul>
+<p>配置新生代和老年代在堆中的内存占比，可以通过设置-XX:NewRation来进行配置<br>默认情况下-XX:NewRation&#x3D;2，表示新生代:老年代&#x3D;1:2<br>如果设置成4，则标识新生代:老年代&#x3D;1:4</p>
+<p>当然也可以通过配置调整新生代中的Eden:S0:S1的内存占比，可以通过-XX:survivorRatio来配置，默认情况下-XX:survivorRatio&#x3D;8，也就是Eden:S0:S1&#x3D;8:1:1</p>
+
     </div>
     
     
