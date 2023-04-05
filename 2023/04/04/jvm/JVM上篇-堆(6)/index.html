@@ -186,12 +186,12 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #ffa2c4">jvm</a>
+                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
             </span>
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #ff7d73">java</a>
+                <a href="/tags/java/" style="color: #03a9f4">java</a>
             </span>
             
         </span>
@@ -264,6 +264,69 @@
 </ul>
 <p>配置新生代和老年代在堆中的内存占比，可以通过设置-XX:NewRation来进行配置<br>默认情况下-XX:NewRation&#x3D;2，表示新生代:老年代&#x3D;1:2<br>如果设置成4，则标识新生代:老年代&#x3D;1:4</p>
 <p>当然也可以通过配置调整新生代中的Eden:S0:S1的内存占比，可以通过-XX:survivorRatio来配置，默认情况下-XX:survivorRatio&#x3D;8，也就是Eden:S0:S1&#x3D;8:1:1</p>
+<p>几乎所有的java对象都是在Eden区被new出来的。绝大多数的java对象的销毁都是在新生代进行</p>
+<p>可以使用-Xmn设置新生代最大内存大小</p>
+<h4 id="1-4-对象分配过程"><a href="#1-4-对象分配过程" class="headerlink" title="1.4 对象分配过程"></a>1.4 对象分配过程</h4><p>为新对象分配内存是一件非常严谨和复杂的任务，JVM的设计者们不仅需要考虑内存如何分配、在哪里分配等问题，而且由于内存分配算法与内存回收算法密切相关，所以还需要考虑GC执行完内存回收后是否会在内存中产生内存碎片</p>
+<p>过程分解</p>
+<ol>
+<li>new的对象先放在Eden区，该区有大小限制</li>
+<li>当Eden区空间不足时，这是又需要进行对象创建时，此时触发MinorGC,也就是JVM的垃圾回收器将对Eden区进行垃圾回收，将Eden区中不再被其他对象所引用的对象进行销毁，之后在将新创建的对象放入Eden区</li>
+<li>将Eden区幸存的对象移动到S0区</li>
+<li>如果此时Eden再次触发了MinorGC,一轮清理后S0区和Eden区中幸存的将移动到S1区</li>
+<li>如果再次触发MinorGC,会将幸存的从S1移动到S0，如此往复</li>
+<li>当幸存次数超过15次时，如果对象依然不能被回收，就会将对象移动到老年代<blockquote>
+<p>15次时默认次数，可以设置参数改变这个数值，-XX:MaxTenuringThreshold</p>
+</blockquote>
+</li>
+<li>当老年代内存不足时，此时会触发MajorGC，执行老年代垃圾回收</li>
+<li>如果在执行完MajorGC后，依然无法为新的对象腾出空间，就会抛出OOM异常</li>
+</ol>
+<h5 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h5><ul>
+<li>针对S0、S1区: 复制操作后会进行内存交换，哪个是空的，那个就是S0</li>
+<li>垃圾回收只会频繁的发生在新生代，很少会在老年代进行收集，几乎不会在永久代和元空间进行收集</li>
+</ul>
+<h4 id="1-5-MinorGC、MajorGC、FullGC"><a href="#1-5-MinorGC、MajorGC、FullGC" class="headerlink" title="1.5 MinorGC、MajorGC、FullGC"></a>1.5 MinorGC、MajorGC、FullGC</h4><p>JVM在进行GC时，并非每次都对上面三个内存区域都同时进行回收，大部分时间的回收都是在新生代</p>
+<p>针对Hotspot VM的实现，它里面的GC按照回收区域又分为两大种类型</p>
+<ul>
+<li>部分收集(Partial GC): 不是完整收集整个堆的垃圾收集<ul>
+<li>新生代收集(Minor GC&#x2F;Young GC)</li>
+<li>老年代收集(Major GC&#x2F;Old GC)<ul>
+<li>目前只有CMS GC会有单独收集老年代的行为</li>
+<li>很多时候MajorGC会和FullGC混淆，需要具体分辨是老年代回收还是整堆回收</li>
+</ul>
+</li>
+<li>混合收集(MixedGC): 收集整个新生代以及部分老年代的垃圾收集<ul>
+<li>目前只有G1 GC会有这种行为</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>整堆收集(Full GC): 收集整个堆和方法区的垃圾收集</li>
+</ul>
+<h5 id="1-5-1-分代式GC策略的触发条件"><a href="#1-5-1-分代式GC策略的触发条件" class="headerlink" title="1.5.1 分代式GC策略的触发条件"></a>1.5.1 分代式GC策略的触发条件</h5><h6 id="年轻代GC-Minor-GC-触发机制"><a href="#年轻代GC-Minor-GC-触发机制" class="headerlink" title="年轻代GC(Minor GC)触发机制"></a>年轻代GC(Minor GC)触发机制</h6><ul>
+<li>当年轻代空间不足时，就会触发MinorGC,这里的年轻代指的是Eden区满了，S区满了不会触发GC</li>
+<li>因为java对象大多具备朝生夕灭的特性，所以MinorGC非常频繁，一般回收速度也会非常快</li>
+<li>MinorGC 会引发STW<blockquote>
+<p>STW(stop the world)，暂停一切用户线程，等垃圾回收结束，用户线程才恢复运行</p>
+</blockquote>
+</li>
+</ul>
+<h6 id="老年代GC-Major-GC-x2F-Old-GC-触发机制"><a href="#老年代GC-Major-GC-x2F-Old-GC-触发机制" class="headerlink" title="老年代GC(Major GC&#x2F;Old GC)触发机制"></a>老年代GC(Major GC&#x2F;Old GC)触发机制</h6><ul>
+<li>指发生在老年代的GC，对象从老年代消失时，就代表着发生了MajorGC</li>
+<li>出现了MajorGC，经常会伴随着至少一次的MinorGC(Parallel Scavenge收集器除外，这个收集器可以选择直接进行MajorGC策略，而不需要执行MinorGC)</li>
+<li>MajorGC 的速度一般会比MinorGC慢10倍以上，STW时间更长</li>
+<li>如果MajorGC发生后，内存还是不够用，就会抛出OOM异常</li>
+</ul>
+<h6 id="Full-GC触发机制"><a href="#Full-GC触发机制" class="headerlink" title="Full GC触发机制"></a>Full GC触发机制</h6><ul>
+<li>调用System.gc()，系统建议执行FullGC,但是不是必然执行</li>
+<li>老年代空间不足</li>
+<li>方法区空间不足</li>
+<li>通过MinorGC后进入老年代的【平均大小大于老年代的可用内存</li>
+<li>由Eden区、S0区向S1区复制对象时，对象大小大于S1区可用内存，则把该对象转存到老年代，且老年代的可用空间小于对象大小</li>
+</ul>
+<blockquote>
+<p>FullGC是JVM调优中着重要关注的一个问题，如何减少FullGC，是调优的关键</p>
+</blockquote>
 
     </div>
     
