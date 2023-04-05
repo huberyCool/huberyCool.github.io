@@ -186,7 +186,7 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
+                <a href="/tags/jvm/" style="color: #ff7d73">jvm</a>
             </span>
             
             <span class="tag">
@@ -327,7 +327,39 @@
 <blockquote>
 <p>FullGC是JVM调优中着重要关注的一个问题，如何减少FullGC，是调优的关键</p>
 </blockquote>
-
+<h4 id="1-6-堆空间分代思想"><a href="#1-6-堆空间分代思想" class="headerlink" title="1.6 堆空间分代思想"></a>1.6 堆空间分代思想</h4><p>经研究，不同对象的生命周期不同，70% ~ 99%的对象都是临时对象</p>
+<p>分代的唯一理由就是优化GC性能</p>
+<p>如果不分代，那么所有对象都在一起，GC的时候要找到哪些对象没用，就需要将所有对象都进行一次扫描，这样会导致性能下降</p>
+<p>如果分代，把新创建的对象放在一个地方，当GC的时候先把这块存储着大量朝生夕灭的对象的区域进行回收，立马就可以获得很大的空闲空间，精准的扫描，提高回收效率</p>
+<h4 id="1-7-内存分配策略"><a href="#1-7-内存分配策略" class="headerlink" title="1.7 内存分配策略"></a>1.7 内存分配策略</h4><p>对象在Eden创建后，经历第一次MinorGC并且存活后，如果S区可以容纳，将对象转移到S区，将对象年龄设置为1， 后面每经历一次MinorGC并且存活，那么就会将对象的年龄增加1</p>
+<p>当年龄增加到一个阈值时(默认为15，不同JVM、GC不太一样)，对象将会被转移到老年代</p>
+<p>晋升老年代的阈值，可以通过 -XX:MaxTenuringThreshold 来设置</p>
+<p>针对不同年龄段的对象分配原则如下</p>
+<ul>
+<li>优先分配到Eden区</li>
+<li>大对象直接分配到老年代：界定大对象的参数是 -XX:PretenureSizeThreshold，设置的值为字节数，一旦独享大于这个数值，将直接进入老年代</li>
+<li>长期存活的对象分配到老年代</li>
+<li>动态对象年龄判断：如果S区中相同年龄的所有对象大小的总和大于S空间的一半，年龄大于或等于该年龄的对象可以直接进入老年代，不需要等到MaxTenuringThreshold中要求的值</li>
+<li>老年代空间分配担保规则</li>
+</ul>
+<h5 id="如何理解老年代空间分配担保规则"><a href="#如何理解老年代空间分配担保规则" class="headerlink" title="如何理解老年代空间分配担保规则"></a>如何理解老年代空间分配担保规则</h5><p>在执行任何一次MinorGC之前，JVM会先检查一下老年代可用的内存空间，是否大于新生代所有对象的总大小</p>
+<p>如果老年代空间小于新生代的全部对象大小，就会看JVM参数 -XX:-HandlePromotionFailure 是否设置了</p>
+<p>设置了这个参数，就会判断老年代内存和之前每次MinorGC进去老年代的对象的平均大小</p>
+<p>如果判断老年代可用的内存空间小于新生代所有对象的总大小<br>此时会有两种情况</p>
+<ul>
+<li>没设置参数<ul>
+<li>会触发FullGC，对老年代进行回收，然后在进行MinorGC</li>
+</ul>
+</li>
+<li>设置参数<ul>
+<li>第一种情况: MinorGC过后，存活对象大小小于S区域大小，则直接进入S区</li>
+<li>第二种情况: MinorGC过后，存活对象大小大于S区域大小，但是小于老年代可用内存大小，直接进入老年代</li>
+<li>第三种情况: MinorGC过后，存活对象大小大于S区域大小，也大于老年代可用内存大小，就会发生HandlePromotionFailure，这时候触发一次FullGC</li>
+</ul>
+</li>
+</ul>
+<p>如果FullGC之后，老年代还是没有足够内存空间容纳新进的对象，此时会抛出OOM异常</p>
+<h4 id="1-8-TLAB-Thread-Local-Allocation-Buffer"><a href="#1-8-TLAB-Thread-Local-Allocation-Buffer" class="headerlink" title="1.8 TLAB(Thread Local Allocation Buffer)"></a>1.8 TLAB(Thread Local Allocation Buffer)</h4>
     </div>
     
     
