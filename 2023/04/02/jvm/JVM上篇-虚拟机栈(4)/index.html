@@ -1,0 +1,601 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>JVM上篇：虚拟机栈(4) | 小鸡吃米</title>
+        <meta name="author" content="Hubery Li" />
+        <meta name="description" content="" />
+        <meta name="keywords" content="" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+        <link rel="icon" href="/images/hexo/baby2.png" />
+
+<!--        爱心点击样式-->
+<!--        <script type="text/javascript" src="/js/click-love.js"></script>-->
+
+<!--        鼠标点击爆炸烟花和特效-->
+        <canvas id="fireworks" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 32767"></canvas>
+        <script type="text/javascript" src="https://cdn.staticfile.org/animejs/3.2.1/anime.min.js"></script>
+        <script type="text/javascript" src="/js/fireworks.js"></script>
+        <canvas id="background" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1"></canvas>
+        <script type="text/javascript" src="/js/background.js"></script>
+        <div id="cursor"></div>
+        <link rel="stylesheet" href="/css/cursor.min.css">
+        <script type="text/javascript" src="/js/cursor.min.js"></script>
+
+        <script src="https://cdn.staticfile.org/vue/3.2.47/vue.global.prod.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.3.0/css/all.min.css" />
+<link rel="stylesheet" href="/css/fonts.min.css" />
+<script> const mixins = {}; </script>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+
+<script src="https://cdn.staticfile.org/highlight.js/11.7.0/highlight.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://cdn.staticfile.org/highlight.js/11.7.0/styles/github.min.css"
+/>
+<script src="/js/lib/highlight.js"></script>
+
+
+
+<script src="/js/lib/preview.js"></script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/main.css" />
+
+    <meta name="generator" content="Hexo 6.3.0"></head>
+    <body>
+        <div id="layout">
+            <transition name="fade">
+            <div id="loading" v-show="loading">
+                <div id="loading-circle">
+                    <h2>LOADING</h2>
+                    <p>加载过慢请开启缓存&ensp;浏览器默认开启</p>
+                    <img src="/images/loading.gif" />
+                </div>
+            </div>
+            </transition>
+            <transition name="into">
+            <div id="main" v-show="!loading">
+                <nav id="menu" ref="menu">
+    <div class="desktop-menu">
+        <a class="title" href="/">
+            <span>小鸡吃米</span>
+        </a>
+        
+        <a href="/">
+            <i class="fa-solid fa-house fa-fw"></i>
+            <span>&ensp;Home</span>
+        </a>
+        
+        <a href="/archives">
+            <i class="fa-solid fa-box-archive fa-fw"></i>
+            <span>&ensp;Archives</span>
+        </a>
+        
+        <a href="/categories">
+            <i class="fa-solid fa-bookmark fa-fw"></i>
+            <span>&ensp;Categories</span>
+        </a>
+        
+        <a href="/tags">
+            <i class="fa-solid fa-tags fa-fw"></i>
+            <span>&ensp;Tags</span>
+        </a>
+        
+        <a href="/about">
+            <i class="fa-solid fa-id-card fa-fw"></i>
+            <span>&ensp;About</span>
+        </a>
+        
+    </div>
+    <div id="mobile-menu">
+        <div class="curtain" v-show="showMenu" @click="showMenu = !showMenu"></div>
+        <div class="title" @click="showMenu = !showMenu">
+            <i class="fa-solid fa-bars fa-fw"></i>
+            <span>&emsp;小鸡吃米</span>
+        </div>
+        <transition name="slide">
+        <div class="items" v-show="showMenu">
+            
+            <a href="/">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-house fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Home</div>
+                </div>
+            </a>
+            
+            <a href="/archives">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-box-archive fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Archives</div>
+                </div>
+            </a>
+            
+            <a href="/categories">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-bookmark fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Categories</div>
+                </div>
+            </a>
+            
+            <a href="/tags">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-tags fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Tags</div>
+                </div>
+            </a>
+            
+            <a href="/about">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-id-card fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">About</div>
+                </div>
+            </a>
+            
+        </div>
+        </transition>
+    </div>
+</nav>
+
+                <div class="article">
+    <div>
+        <h1>JVM上篇：虚拟机栈(4)</h1>
+    </div>
+    <div class="info">
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/4/2
+        </span>
+        
+        <span class="category">
+            <a href="/categories/%E7%AC%94%E8%AE%B0/">
+                <span class="icon">
+                    <i class="fa-solid fa-bookmark fa-fw"></i>
+                </span>
+                笔记
+            </a>
+        </span>
+        
+        
+        <span class="tags">
+            <span class="icon">
+                <i class="fa-solid fa-tags fa-fw"></i>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/java/" style="color: #00a596">java</a>
+            </span>
+            
+        </span>
+        
+    </div>
+    
+    <div class="content" v-pre>
+        <p>接上一篇 <a href="/2023/04/01/JVM%E4%B8%8A%E7%AF%87-%E8%BF%90%E8%A1%8C%E6%97%B6%E6%95%B0%E6%8D%AE%E5%8C%BA%E5%8F%8A%E7%A8%8B%E5%BA%8F%E8%AE%A1%E6%95%B0%E5%99%A8(3)/">JVM上篇-运行时数据区及程序计数器(3)</a></p>
+<span id="more"></span>
+
+<h2 id="虚拟机栈"><a href="#虚拟机栈" class="headerlink" title="虚拟机栈"></a>虚拟机栈</h2><h3 id="1-虚拟机栈概述"><a href="#1-虚拟机栈概述" class="headerlink" title="1. 虚拟机栈概述"></a>1. 虚拟机栈概述</h3><blockquote>
+<p>由于跨平台性的设计，java的指令都是根据栈来设计的，不同平台CPU架构不同，所以不能基于寄存器设计</p>
+</blockquote>
+<p>优点</p>
+<ul>
+<li>跨平台</li>
+<li>指令集小</li>
+<li>编译器容易实现</li>
+</ul>
+<p>缺点</p>
+<ul>
+<li>性能下降</li>
+<li>实现同样的功能需要更多的指令</li>
+</ul>
+<h3 id="1-1-内存中的栈与堆"><a href="#1-1-内存中的栈与堆" class="headerlink" title="1.1 内存中的栈与堆"></a>1.1 内存中的栈与堆</h3><p>栈</p>
+<ul>
+<li>运行时单位</li>
+<li>解决程序的运行问题，即程序如何执行，如何处理数据</li>
+</ul>
+<p>堆</p>
+<ul>
+<li>存储的单位</li>
+<li>解决的是数据存储的问题，即数据怎么放，放哪里</li>
+</ul>
+<h3 id="1-2-虚拟机栈基本内容"><a href="#1-2-虚拟机栈基本内容" class="headerlink" title="1.2 虚拟机栈基本内容"></a>1.2 虚拟机栈基本内容</h3><h4 id="1-2-1-是什么？"><a href="#1-2-1-是什么？" class="headerlink" title="1.2.1 是什么？"></a>1.2.1 是什么？</h4><p>java虚拟机栈(Java Virtual Machine Stack)，早期也叫java栈。每个线程在创建时都会创建一个虚拟机栈，其内部保存一个个的栈帧(Stack Frame)，对应这一次次的java方法调用，是线程私有的</p>
+<h4 id="1-2-2-生命周期"><a href="#1-2-2-生命周期" class="headerlink" title="1.2.2 生命周期"></a>1.2.2 生命周期</h4><p>生命周期和线程的生命周期一致</p>
+<h4 id="1-2-3-作用"><a href="#1-2-3-作用" class="headerlink" title="1.2.3 作用"></a>1.2.3 作用</h4><p>主管java程序的运行，它保存方法的局部变量、部分结果，并参与方法的调用和返回</p>
+<h4 id="1-2-4-特点"><a href="#1-2-4-特点" class="headerlink" title="1.2.4 特点"></a>1.2.4 特点</h4><p>栈是一种快速优先的分配存储方式，访问速度仅次于程序计数器<br>JVM直接堆java栈的操作只有两个</p>
+<ul>
+<li>每个方法的执行，伴随着进栈(入栈、压栈)</li>
+<li>执行结束后的出栈工作</li>
+</ul>
+<p>注意：</p>
+<ul>
+<li>对于栈来说不存在垃圾回收问题</li>
+<li>栈存在溢出的情况</li>
+<li>栈是FILO模式</li>
+</ul>
+<h4 id="1-2-5-java虚拟机规范允许栈的大小是动态的或者固定不变的"><a href="#1-2-5-java虚拟机规范允许栈的大小是动态的或者固定不变的" class="headerlink" title="1.2.5 java虚拟机规范允许栈的大小是动态的或者固定不变的"></a>1.2.5 java虚拟机规范允许栈的大小是动态的或者固定不变的</h4><ul>
+<li>固定大小<blockquote>
+<p>如果采用固定大小的栈，那每个线程的栈容量可以在线程创建的时候独立选定。如果线程请求分配的栈容量超过栈允许的最大容量，java虚拟机将会抛出一个StackOverflowError异常</p>
+</blockquote>
+</li>
+<li>动态大小<blockquote>
+<p>如果是可以动态扩展的，并且在尝试扩展的时候无法申请到足够的内存，或者在创建新的线程时没有足够的内存去创建对应的虚拟机栈，那java虚拟机将抛出一个OutOfMemoryError异常(OOM)</p>
+</blockquote>
+</li>
+</ul>
+<p>模拟StackoverflowError异常</p>
+<pre><code class="java">public static void main(String[] args) &#123;
+    test();
+&#125;
+public static void test() &#123;
+    test();
+&#125;
+//抛出异常：Exception in thread&quot;main&quot;java.lang.StackoverflowError
+//程序不断的进行递归调用，而且没有退出条件，就会导致不断地进行压栈。
+</code></pre>
+<h4 id="1-2-6-设置栈内存大小"><a href="#1-2-6-设置栈内存大小" class="headerlink" title="1.2.6 设置栈内存大小"></a>1.2.6 设置栈内存大小</h4><blockquote>
+<p>我们可以使用参数-Xss选项来设置线程的最大栈空间，栈的大小直接决定了函数的最大可达深度</p>
+</blockquote>
+<p>引入一个例子来说明下</p>
+<pre><code class="java">public class StackDeepTest &#123;
+    private static int count = 0;
+
+    public static void test() &#123;
+        count++;
+        test();
+    &#125;
+
+    public static void main(String args[]) &#123;
+        try &#123;
+            test();
+        &#125; catch (Throwable e) &#123;
+            System.out.println(&quot;deep of calling=&quot; + count);
+            e.printStackTrace();
+        &#125;
+    &#125;
+&#125;
+</code></pre>
+<p>设置 -Xss1M，执行结果为<br><img src="/../../images/jvm/Xss1M%E7%BB%93%E6%9E%9C.png" alt="img.png"></p>
+<p>设置 -Xss2M，执行结果为<br><img src="/../../images/jvm/Xss2M%E7%BB%93%E6%9E%9C.png" alt="img.png"></p>
+<h3 id="2-栈的存储单位"><a href="#2-栈的存储单位" class="headerlink" title="2. 栈的存储单位"></a>2. 栈的存储单位</h3><h3 id="2-1-栈中存储什么？"><a href="#2-1-栈中存储什么？" class="headerlink" title="2.1 栈中存储什么？"></a>2.1 栈中存储什么？</h3><p>每个线程都有自己的栈，栈中的数据都是以栈帧的格式存在<br>在这个线程上正在执行的每个方法都各自对应一个栈帧<br>栈帧是一个内存区块，是一个数据集，维系着方法执行过程中的各种数据信息</p>
+<h3 id="2-2-栈的运行原理"><a href="#2-2-栈的运行原理" class="headerlink" title="2.2 栈的运行原理"></a>2.2 栈的运行原理</h3><p>JVM直接对栈的操作只有两个，压栈和出栈，遵循先进后出(FILO)原则 </p>
+<p>在一条活动线程中，一个时间点上，只会有一个活动的栈帧，即只有当前正在执行的栈帧(栈顶栈帧)是有效的，这个栈帧被称为当前栈帧(Current Frame)，与当前栈帧相对应的方法就是当前方法(Current Method)，定义这个方法的类就是当前类(Current Class)</p>
+<p>执行引擎运行的所有字节码指令只针对当前栈帧进行操作</p>
+<p>如果在该方法中调用了其他方法，对应的新的栈帧会被创建出来，放在栈的顶端，成为新的当前帧</p>
+<p>引入一个例子加以说明</p>
+<pre><code class="java">public class StackFrame &#123;
+
+    private void test1() &#123;
+        test2();
+    &#125;
+
+    private void test2() &#123;
+        test3();
+    &#125;
+
+    private void test3() &#123;
+
+    &#125;
+&#125;
+</code></pre>
+<p>来张图表示下<br><img src="/../../images/jvm/%E6%A0%88%E5%B8%A7%E7%AE%80%E6%98%93%E5%9B%BE.png" alt="img.png"></p>
+<p>不同线程中所包含的栈帧是不允许存在相互引用的，即不可能在一个栈帧之中引用另外一个线程的栈帧</p>
+<p>如果当前方法调用了其他方法，方法返回之际，当前栈帧会回传此方法的执行结果给前一个栈帧，接着，虚拟机会丢弃当前栈帧，使得前一个栈帧重新成为当前栈帧</p>
+<p>java方法有两种返回函数的方式</p>
+<ul>
+<li>正常的函数返回， 使用return执行即可</li>
+<li>抛出异常</li>
+</ul>
+<p>两种方式最终都会导致栈帧被弹出</p>
+<h4 id="2-3-栈帧的内部结构"><a href="#2-3-栈帧的内部结构" class="headerlink" title="2.3 栈帧的内部结构"></a>2.3 栈帧的内部结构</h4><p>每个栈帧都存储了一些内容</p>
+<ul>
+<li>局部变量表(Local Variables - LV)</li>
+<li>操作数栈(Operand Stack - OS)</li>
+<li>动态链接(Dynamic Linking - DL)</li>
+<li>方法返回地址(Return Address - RA)</li>
+<li>一些附加信息</li>
+</ul>
+<p>其中最后三条在有些地方被称为帧数据区</p>
+<p>并行每个线程下的栈都是私有的，因此每个线程都有自己各自的栈，并且每个栈里面都有很多栈帧，栈帧的大小主要有局部变量表和操作数栈决定</p>
+<h3 id="3-局部变量表-Local-Variables-LV"><a href="#3-局部变量表-Local-Variables-LV" class="headerlink" title="3. 局部变量表(Local Variables - LV)"></a>3. 局部变量表(Local Variables - LV)</h3><p>局部变量表也被称之为局部变量数组或本地变量表</p>
+<ul>
+<li>被定义为了一个数组，主要用于存储方法参数和定义在方法内的局部变量，这些数据类型包括各类基本数据类型、对象引用(reference)，以及returnAddress类型</li>
+<li>不存在数据安全性问题，因为局部变量表是简历在线程的栈上，是线程私有的</li>
+<li>局部变量表所需要的容量在编译期就被确定下来了，并保存在方法的Code属性的maximum local variables数据项中。在方法运行期间是不会改变局部变量表的大小的</li>
+<li>方法嵌套调用的次数由栈的大小决定，一般来说，栈越大，可嵌套调用的次数越多。对一个函数而言，他的参数和局部变量越大，局部变量表就越大，进而导致栈帧越大，这样函数调用就会占用更多的栈空间，进而导致可嵌套调用的次数就越少</li>
+<li>局部变量表中的变量只有当前方法调用中才有效。在方法执行时，虚拟机通过使用局部变量表完成参数值到参数变量列表的传递过程，当方法调用结束后，随着方法栈帧的销毁，局部变量表也会随之销毁</li>
+</ul>
+<h4 id="3-1-Slot-变量槽"><a href="#3-1-Slot-变量槽" class="headerlink" title="3.1 Slot(变量槽)"></a>3.1 Slot(变量槽)</h4><ul>
+<li>局部变量表最基本的存储单元是Slot</li>
+<li>参数值的存放总是从局部变量数组的下标0开始</li>
+<li>存放编译期可知的各种基本数据类型、引用类型、returnAddress类型的变量</li>
+<li>32位以内的类型值占用一个Slot，64位(double和long)占用两个</li>
+<li>byte、short、char在存储前被转换为int，boolean也被转换为int，0表示false，非0表示true</li>
+<li>JVM会为局部变量表中的没给Slot都分配一个访问索引，通过这个索引即可以成功访问到局部变量表中指定的局部变量值</li>
+<li>当一个实例方法被调用的时候，它的方法参数和方法体内部定义的局部变量都将会按照顺序被复制到局部变量表中的每个Slot上</li>
+<li>如果需要访问局部变量表中的一个64位的局部变量值时，只需要使用前一个索引即可</li>
+<li>如果当前栈是由构造方法或者实例方法创建的，那么该对象引用this将会存放在index为0的Slot处，其余的参数按照参数表的顺序继续排列</li>
+</ul>
+<h4 id="3-2-Slot的重复使用"><a href="#3-2-Slot的重复使用" class="headerlink" title="3.2 Slot的重复使用"></a>3.2 Slot的重复使用</h4><p>栈帧中的局部变量表中的槽位是可以重复使用的，如果一个局部变量过了其作用域，那么在其作用域之后申明的新的局部变量就会很有可能会复用已过期的局部变量的槽位，从而达到节省资源的目的</p>
+<p>来个示例解释下</p>
+<pre><code class="java">public class LocalVariablesSlot &#123;
+
+    private void test() &#123;
+        &#123;
+            int a = 1;
+            System.out.println(a);
+        &#125;
+        
+        int b = 0; //此时b就会复用之前a的Slot
+    &#125;
+&#125;
+</code></pre>
+<p>使用javap -v LocalVariablesSlot.class编译后，可以看到，b复用了a的Slot<br><img src="/../../images/jvm/%E5%B1%80%E9%83%A8%E5%8F%98%E9%87%8F%E8%A1%A8slot%E7%9A%84%E5%A4%8D%E7%94%A8.png" alt="img.png"></p>
+<h4 id="3-3-静态变量与局部变量"><a href="#3-3-静态变量与局部变量" class="headerlink" title="3.3 静态变量与局部变量"></a>3.3 静态变量与局部变量</h4><p>方法的参数分配完Slot后，就该根据方法体内定义的变量顺序和作用域来给局部变量分配Slot</p>
+<p>在类加载过程，类变量会有两次初始化机会</p>
+<ul>
+<li>准备阶段，该阶段执行系统初始化，对类变量设置零值</li>
+<li>初始化阶段，该阶段会将代码中定义的初始值赋值给变量</li>
+</ul>
+<p>但是局部变量不存在系统初始化阶段，这意味着在定义局部变量的同时必须人为的给变量进行初始化，否则变量将无法使用</p>
+<pre><code class="java">public class UnInitLocalVariables &#123;
+
+    public static void main(String[] args) &#123;
+        int i;
+        System.out.println(i); //Variable &#39;i&#39; might not have been initialized
+    &#125;
+&#125;
+</code></pre>
+<h4 id="3-4-性能调优相关"><a href="#3-4-性能调优相关" class="headerlink" title="3.4 性能调优相关"></a>3.4 性能调优相关</h4><p>栈帧中，和性能调优关系最密切的就是局部变量表</p>
+<p>局部变量表中的变量也是重要的垃圾回收根节点，只要被局部变量表中直接或间接引用的对象都不会被回收</p>
+<h3 id="4-操作数栈-Operand-Stack-OS"><a href="#4-操作数栈-Operand-Stack-OS" class="headerlink" title="4. 操作数栈(Operand Stack - OS)"></a>4. 操作数栈(Operand Stack - OS)</h3><p>每个独立的栈帧除了包含局部变量表之外，还包含一个先进后出的操作数栈，也可称之为表达式栈(Expression Stack)，在方法执行过程中，根据字节码指令，往栈中写入数据或提取数据，即入栈(push)或出栈(pop)</p>
+<p>主要用于保存计算过程中的中间结果，同时作为计算过程中变量临时的存储空间</p>
+<p>它还是JVM执行引擎的一个工作区，当一个方法刚开始执行的时候，一个新的栈帧也会随之被创建出来，这个方法的操作数栈是空的</p>
+<p>每个操作数栈都会拥有一个明确的栈深度，用于存储数值，其所需的最大深度在编译期就定义好了，保存在方法的Code属性的max_stack中</p>
+<p>栈中可以保存任意java数据类型， 同样的道理，32位类型占用一个栈单位深度，64位占用两个</p>
+<p>操作数栈并不能通过索引来进行数据的访问，其只能通过入栈和出栈的操作来完成一次数据访问</p>
+<p>如果被调用的方法有返回值，其返回值将被压入当前栈帧的操作数栈中，并更新程序计数器中下一条需要执行的字节码指令</p>
+<p>操作数栈中的元素的数据类型必须与字节码指令的序列严格匹配，这由编译器在编译期间进行验证，同时在类的加载过程中的类检验阶段的数据流分析阶段要再次验证</p>
+<p>java虚拟机的解释引擎是基于栈的执行引擎，这里面的栈就是指的操作数栈</p>
+<h3 id="5-代码在栈中的执行过程"><a href="#5-代码在栈中的执行过程" class="headerlink" title="5. 代码在栈中的执行过程"></a>5. 代码在栈中的执行过程</h3><pre><code class="java">public class OperandStack &#123;
+
+    public static void main(String[] args) &#123;
+        byte a = 20;
+        int b = 11;
+        int c = a + b;
+    &#125;
+&#125;
+</code></pre>
+<p>生成class文件后，执行javap -v OperandStack.class，得到以下数据</p>
+<pre><code class="text">0: bipush        20
+2: istore_1
+3: bipush        11
+5: istore_2
+6: iload_1
+7: iload_2
+8: iadd
+9: istore_3
+10: return
+</code></pre>
+<p>以下根据图片逐步的进行解释<br><img src="/../../images/jvm/%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B_1.png" alt="img.png"><br><img src="/../../images/jvm/%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B_2.png" alt="img.png"><br><img src="/../../images/jvm/%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B_3.png" alt="img.png"><br><img src="/../../images/jvm/%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B_4.png" alt="img.png"><br><img src="/../../images/jvm/%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B_5.png" alt="img.png"><br><img src="/../../images/jvm/%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B_6.png" alt="img.png"><br><img src="/../../images/jvm/%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B_7.png" alt="img.png"><br><img src="/../../images/jvm/%E6%93%8D%E4%BD%9C%E6%95%B0%E6%A0%88%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B_8.png" alt="img.png"></p>
+<h3 id="6-栈顶缓存技术-Top-Of-Stack-Cashing"><a href="#6-栈顶缓存技术-Top-Of-Stack-Cashing" class="headerlink" title="6. 栈顶缓存技术(Top Of Stack Cashing)"></a>6. 栈顶缓存技术(Top Of Stack Cashing)</h3><p>基于栈式架构的虚拟机所使用的零地址指令更加紧凑，但完成一项操作需要更多的入栈、出栈指令，这同时意味着将需要更多的指令分派(instruction dispatch)次数和内存读写次数</p>
+<p>由于操作数是存储在内存中的，因此频繁的执行读写，必然会影响执行速度。</p>
+<p>那么为了解决这个性能问题，HotSpot JVM采用了栈顶缓存技术</p>
+<p>那么什么是栈顶缓存技术？</p>
+<blockquote>
+<p>栈顶缓存技术就是将栈顶元素全部缓存在物理CPU的寄存器中，以此降低内存读写次数，提升执行引擎的执行效率</p>
+</blockquote>
+<h3 id="7-动态链接-Dynamic-Linking-DL"><a href="#7-动态链接-Dynamic-Linking-DL" class="headerlink" title="7. 动态链接(Dynamic Linking - DL)"></a>7. 动态链接(Dynamic Linking - DL)</h3><p>每个栈帧内部都包含一个指向运行时常量池中该栈帧所属方法的引用。包含这个引用的目的就是为了支持当前方法的代码能够实现动态链接(如： invokedynamic指令)</p>
+<p>在java源文件被编译到字节码文件时，所有的变量和方法引用都作为符号引用(Symbolic Reference)保存在class文件的常量池中</p>
+<p>描述一个方法调用了其他方法时，就是通过常量池中指向方法的符号引用来表示的。</p>
+<blockquote>
+<p>动态链接的作用就是为了将这些符号引用转换为调用方法的直接引用</p>
+</blockquote>
+<p><img src="/../../images/jvm/%E5%8A%A8%E6%80%81%E9%93%BE%E6%8E%A5%E6%8C%87%E5%90%91%E7%A4%BA%E6%84%8F%E5%9B%BE.png" alt="img.png"></p>
+<p>那么为什么需要运行时常量池呢？</p>
+<blockquote>
+<p>就是为了提供一些符号和常量，便于指令的识别</p>
+</blockquote>
+<h3 id="8-方法的调用：解析和分配"><a href="#8-方法的调用：解析和分配" class="headerlink" title="8. 方法的调用：解析和分配"></a>8. 方法的调用：解析和分配</h3><h4 id="8-1-静态链接"><a href="#8-1-静态链接" class="headerlink" title="8.1 静态链接"></a>8.1 静态链接</h4><p>当一个字节码文件被装载到JVM内部，如果被调用的目标方法在编译期可知，且运行期间保持不变，这种情况下调用方法的符号引用转换为直接引用的过程称为静态链接</p>
+<h4 id="8-2-动态链接"><a href="#8-2-动态链接" class="headerlink" title="8.2 动态链接"></a>8.2 动态链接</h4><p>如果被调用的方法在编译期无法被确定下来，只能够在运行期间将调用方法的符号转换为直接引用，这个过程被称之为动态链接</p>
+<h4 id="8-3-方法的绑定机制"><a href="#8-3-方法的绑定机制" class="headerlink" title="8.3 方法的绑定机制"></a>8.3 方法的绑定机制</h4><p>在JVM中，将符号引用转换为直接引用与方法的绑定机制有关</p>
+<p>绑定是一个字段、方法或者类在符号引用被替换为直接引用的过程，这仅仅发生一次</p>
+<p>绑定机制分为两种</p>
+<ul>
+<li>早期绑定<blockquote>
+<p>早期绑定就是指被调用的目标方法如果在编译期可知，且运行期保持不变时，即可将这个方法与所属的类型进行绑定，这样一来，由于明确了被调用的目标方法明确，因此也就可以使用静态链接的方式将符号引用转换为直接引用</p>
+</blockquote>
+</li>
+<li>晚期绑定<blockquote>
+<p>如果被调用的方法在编译期无法被确定下来，只能够在运行期间根据实际绑定相关的方法，这种绑定过程也就被称之为晚期绑定</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="8-4-虚方法和非虚方法"><a href="#8-4-虚方法和非虚方法" class="headerlink" title="8.4 虚方法和非虚方法"></a>8.4 虚方法和非虚方法</h4><p>如果方法在编译期就确定了具体的调用版本，这个版本在运行时是不可变的，这样的方法就称之为非虚方法</p>
+<p>非虚方法包括</p>
+<ul>
+<li>静态方法</li>
+<li>私有方法</li>
+<li>final方法</li>
+<li>实例构造器</li>
+<li>父类方法</li>
+</ul>
+<p>什么方法是虚方法呢？除了非虚方法之外都是虚方法</p>
+<h4 id="8-5-调用指令"><a href="#8-5-调用指令" class="headerlink" title="8.5 调用指令"></a>8.5 调用指令</h4><h5 id="普通调用指令"><a href="#普通调用指令" class="headerlink" title="普通调用指令"></a>普通调用指令</h5><ul>
+<li>invokestatic 调用静态方法，解析阶段确定唯一方法版本</li>
+<li>invokespecial 调用方法、私有及其父类方法，解析阶段确定唯一方法版本</li>
+<li>invokevirtual 调用虚方法</li>
+<li>invokeinterface 调用接口方法</li>
+</ul>
+<p>以上指令固化在虚拟机内部，方法的调用执行人为无法干预</p>
+<p>其中invokestatic指令和invokespecial指令调用的方法称为非虚方法，其余的(final修饰的除外)称为虚方法</p>
+<h5 id="动态调用方法"><a href="#动态调用方法" class="headerlink" title="动态调用方法"></a>动态调用方法</h5><ul>
+<li>invokedynamic 动态解析出需要调用的方法，然后执行<blockquote>
+<p>JVM 字节码指令集一直比较稳定，一直到java7中才增加了该指令，这是java为了实现动态类型语言而做的一种改进<br>但是java7中并没有提供直接生成invokedynamic指令的方法，需要借助ASM这种底层字节码工具来产生invokedynamic指令，只到java8的Lambda表达式出现，invokedynamic指令在java中才有了直接的生成方式<br>java7中增加的动态语言类型支持的本质是对java虚拟机规范的修改，而不是对java语言规则的修改。这一块相对来讲比较复杂。<br>增加了虚拟机中的方法调用，最直接的受益者就是运行在java平台的动态语言编译器</p>
+</blockquote>
+</li>
+</ul>
+<p>该指令支持由用户确定版本</p>
+<h5 id="动态类型语言和静态类型语言"><a href="#动态类型语言和静态类型语言" class="headerlink" title="动态类型语言和静态类型语言"></a>动态类型语言和静态类型语言</h5><p>这两者的区别在于对类型的检查是在编译期还是在运行期，如果是在编译期，则是静态类型语言，反之则是动态类型语言</p>
+<p>静态类型语言判断的是变量自身的类型信息</p>
+<p>动态类型语言判断的是变量值的类型信息，变量没有类型信息，变量值才有，这也是动态类型语言的一个重要特征</p>
+<h4 id="8-6-方法重写的本质"><a href="#8-6-方法重写的本质" class="headerlink" title="8.6 方法重写的本质"></a>8.6 方法重写的本质</h4><ul>
+<li>找到操作数栈的第一个元素所执行的对象的实际类型，记作C</li>
+<li>如果在类型C中找到与常量中的简单名称都相符的方法，则进行访问权限校验，如果通过则返回这个方法的直接引用，查询过程结束，如果不通过，则返回java.lang.IllegalAccessError异常</li>
+<li>如果没找到相符的，按照继承关系从下往上依次对C的各个父类进行第二步的搜索和验证过程。</li>
+<li>如果始终没有找到相符的，则抛出java.lang.AbstractMethodsError异常</li>
+</ul>
+<h5 id="关于java-lang-IllegalAccessError"><a href="#关于java-lang-IllegalAccessError" class="headerlink" title="关于java.lang.IllegalAccessError"></a>关于java.lang.IllegalAccessError</h5><p>程序试图访问或修改一个属性或调用一个方法，这个属性或方法，你没有访问权限。一般的，这个会引起编译器异常，这个错误如果发生在运行期，就说明一个类发生了不兼容的改变</p>
+<h4 id="8-7-虚方法表"><a href="#8-7-虚方法表" class="headerlink" title="8.7 虚方法表"></a>8.7 虚方法表</h4><p>在面向对象编程中，会很频繁的使用到动态分派，如果在每次动态分派的过程中都要重新在类的方法元数据中搜索合适的目标的话，就可能影响到执行效率。</p>
+<p>因此，为了提高性能，JVM采用在类的方法区建立一个虚方法表(virtual method table)来实现。使用索引来代替查找</p>
+<p>这张表中只会存在虚方法，非虚方法不会出现在表中</p>
+<p>每个类都会有个虚方法表，表中存放的是各个方法的实际入口</p>
+<p>虚方法表会在类加载的链接阶段被创建并开始初始化，类的变量初始化准备完成之后，JVM会把该类的方法表也初始化到位</p>
+<h3 id="9-方法返回地址-Return-Address-RA"><a href="#9-方法返回地址-Return-Address-RA" class="headerlink" title="9. 方法返回地址(Return Address - RA)"></a>9. 方法返回地址(Return Address - RA)</h3><p>一个方法的结束，两种方式</p>
+<ul>
+<li>正常执行结束<blockquote>
+<p>执行引擎遇到任何一个方法返回的字节码指令(return)，会有返回值传递给上层的调用者，简称正常完成出口</p>
+</blockquote>
+<ul>
+<li>一个方法在正常调用完成之后，究竟需要使用哪一个返回指令，需要根据方法返回值的实际数据类型而定<ul>
+<li>ireturn<blockquote>
+<p>当返回值是boolean、byte、char、short和int类型时使用</p>
+</blockquote>
+</li>
+<li>lreturn<blockquote>
+<p>当返回long类型时使用</p>
+</blockquote>
+</li>
+<li>freturn<blockquote>
+<p>当返回float类型时使用</p>
+</blockquote>
+</li>
+<li>dreturn<blockquote>
+<p>当返回double类型时使用</p>
+</blockquote>
+</li>
+<li>areturn<blockquote>
+<p>当返回void时使用，该指令不会返回方法执行结果，只会进行跳转动作</p>
+</blockquote>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>出现异常，非正常结束<blockquote>
+<p>在方法执行过程中遇到异常，并且这个异常没有在方法内进行处理，也就是只要在本方法的异常表中没有搜索到匹配的异常处理器，就会导致方法退出，简称异常完成出口</p>
+</blockquote>
+</li>
+</ul>
+<h5 id="异常处理表"><a href="#异常处理表" class="headerlink" title="异常处理表"></a>异常处理表</h5><p>方法执行过程中，抛出异常时的异常处理，存储在一个异常处理表中，方便在发生异常的时候找到处理异常的代码</p>
+<pre><code class="java">public void test() &#123;
+    byte a = 20;
+    int b = 11;
+
+    try &#123;
+        int c = b / 0;
+    &#125; catch (ArithmeticException e) &#123;
+        System.out.println(&quot;ArithmeticException&quot;);
+    &#125;
+&#125;
+</code></pre>
+<p>javap编译后可以看到以下的异常处理表<br><img src="/../../images/jvm/%E5%BC%82%E5%B8%B8%E5%A4%84%E7%90%86%E8%A1%A8.png" alt="img.png"></p>
+<p>本质上，方法的退出就是当前栈帧出栈的过程，此时需要恢复上层方法的局部变量表、操作数栈、将返回值压入调用者栈帧的操作数栈、设置程序计数器值等，让调用者方法继续往下执行</p>
+<h3 id="10-知识点"><a href="#10-知识点" class="headerlink" title="10. 知识点"></a>10. 知识点</h3><ul>
+<li>模拟栈溢出<ul>
+<li>通过-Xss调整栈的大小来模拟自身递归调用，就会报StackOverflowError</li>
+</ul>
+</li>
+<li>调整栈的大小，是否能保证栈不溢出<ul>
+<li>不能保证，因为内存一定的情况下，设置栈的大小，只是增加了其调用次数，而不能保证栈不溢出</li>
+</ul>
+</li>
+<li>分配的栈是不是越大越好<ul>
+<li>不是，栈越大，栈越不容易移除，但是会减少线程分配数量，因为空间一定，栈越大，可分配的栈越少</li>
+</ul>
+</li>
+<li>垃圾回收是否会涉及到虚拟机栈<ul>
+<li>不会，只有方法区和堆才会涉及到垃圾回收，垃圾回收只会在可达性分析是涉及到了虚拟机栈，因为虚拟机栈内的局部变量表里面保存的数据为垃圾回收的根节点</li>
+</ul>
+</li>
+<li>方法中定义的局部变量是否线程安全<ul>
+<li>如果对象是在内部产生、内部消亡，没有返回到外部，则是线程安全的，反之则是线程不安全的</li>
+</ul>
+</li>
+</ul>
+
+    </div>
+    
+    
+    
+    
+    
+    
+    
+</div>
+
+                <footer id="footer">
+    <div id="footer-wrap">
+        <div>
+            &copy;
+            2023 - 2023 小鸡吃米
+            <span id="footer-icon">
+                <i class="fa-solid fa-font-awesome fa-fw"></i>
+            </span>
+            &commat;Hubery Li
+        </div>
+        <div>
+            Based on the <a target="_blank" rel="noopener" href="https://hexo.io">Hexo Engine</a> &amp;
+            <a target="_blank" rel="noopener" href="https://github.com/argvchs/hexo-theme-particlex">ParticleX Theme</a>
+        </div>
+        
+    </div>
+</footer>
+
+            </div>
+            </transition>
+            
+            <transition name="fade">
+            <div id="preview" ref="preview" v-show="previewShow">
+                <img id="preview-content" ref="previewContent" />
+            </div>
+            </transition>
+            
+        </div>
+        <script src="/js/main.js"></script>
+        
+        
+
+
+
+
+        
+    </body>
+</html>

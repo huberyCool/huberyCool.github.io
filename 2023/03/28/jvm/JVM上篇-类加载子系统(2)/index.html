@@ -1,0 +1,439 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>JVM上篇：类加载子系统(2) | 小鸡吃米</title>
+        <meta name="author" content="Hubery Li" />
+        <meta name="description" content="" />
+        <meta name="keywords" content="" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+        <link rel="icon" href="/images/hexo/baby2.png" />
+
+<!--        爱心点击样式-->
+<!--        <script type="text/javascript" src="/js/click-love.js"></script>-->
+
+<!--        鼠标点击爆炸烟花和特效-->
+        <canvas id="fireworks" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 32767"></canvas>
+        <script type="text/javascript" src="https://cdn.staticfile.org/animejs/3.2.1/anime.min.js"></script>
+        <script type="text/javascript" src="/js/fireworks.js"></script>
+        <canvas id="background" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1"></canvas>
+        <script type="text/javascript" src="/js/background.js"></script>
+        <div id="cursor"></div>
+        <link rel="stylesheet" href="/css/cursor.min.css">
+        <script type="text/javascript" src="/js/cursor.min.js"></script>
+
+        <script src="https://cdn.staticfile.org/vue/3.2.47/vue.global.prod.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.3.0/css/all.min.css" />
+<link rel="stylesheet" href="/css/fonts.min.css" />
+<script> const mixins = {}; </script>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+
+<script src="https://cdn.staticfile.org/highlight.js/11.7.0/highlight.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://cdn.staticfile.org/highlight.js/11.7.0/styles/github.min.css"
+/>
+<script src="/js/lib/highlight.js"></script>
+
+
+
+<script src="/js/lib/preview.js"></script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/main.css" />
+
+    <meta name="generator" content="Hexo 6.3.0"></head>
+    <body>
+        <div id="layout">
+            <transition name="fade">
+            <div id="loading" v-show="loading">
+                <div id="loading-circle">
+                    <h2>LOADING</h2>
+                    <p>加载过慢请开启缓存&ensp;浏览器默认开启</p>
+                    <img src="/images/loading.gif" />
+                </div>
+            </div>
+            </transition>
+            <transition name="into">
+            <div id="main" v-show="!loading">
+                <nav id="menu" ref="menu">
+    <div class="desktop-menu">
+        <a class="title" href="/">
+            <span>小鸡吃米</span>
+        </a>
+        
+        <a href="/">
+            <i class="fa-solid fa-house fa-fw"></i>
+            <span>&ensp;Home</span>
+        </a>
+        
+        <a href="/archives">
+            <i class="fa-solid fa-box-archive fa-fw"></i>
+            <span>&ensp;Archives</span>
+        </a>
+        
+        <a href="/categories">
+            <i class="fa-solid fa-bookmark fa-fw"></i>
+            <span>&ensp;Categories</span>
+        </a>
+        
+        <a href="/tags">
+            <i class="fa-solid fa-tags fa-fw"></i>
+            <span>&ensp;Tags</span>
+        </a>
+        
+        <a href="/about">
+            <i class="fa-solid fa-id-card fa-fw"></i>
+            <span>&ensp;About</span>
+        </a>
+        
+    </div>
+    <div id="mobile-menu">
+        <div class="curtain" v-show="showMenu" @click="showMenu = !showMenu"></div>
+        <div class="title" @click="showMenu = !showMenu">
+            <i class="fa-solid fa-bars fa-fw"></i>
+            <span>&emsp;小鸡吃米</span>
+        </div>
+        <transition name="slide">
+        <div class="items" v-show="showMenu">
+            
+            <a href="/">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-house fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Home</div>
+                </div>
+            </a>
+            
+            <a href="/archives">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-box-archive fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Archives</div>
+                </div>
+            </a>
+            
+            <a href="/categories">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-bookmark fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Categories</div>
+                </div>
+            </a>
+            
+            <a href="/tags">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-tags fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Tags</div>
+                </div>
+            </a>
+            
+            <a href="/about">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-id-card fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">About</div>
+                </div>
+            </a>
+            
+        </div>
+        </transition>
+    </div>
+</nav>
+
+                <div class="article">
+    <div>
+        <h1>JVM上篇：类加载子系统(2)</h1>
+    </div>
+    <div class="info">
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/3/28
+        </span>
+        
+        <span class="category">
+            <a href="/categories/%E7%AC%94%E8%AE%B0/">
+                <span class="icon">
+                    <i class="fa-solid fa-bookmark fa-fw"></i>
+                </span>
+                笔记
+            </a>
+        </span>
+        
+        
+        <span class="tags">
+            <span class="icon">
+                <i class="fa-solid fa-tags fa-fw"></i>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/jvm/" style="color: #ffa2c4">jvm</a>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/java/" style="color: #00bcd4">java</a>
+            </span>
+            
+        </span>
+        
+    </div>
+    
+    <div class="content" v-pre>
+        <p>接上一篇 <a href="/2023/03/27/JVM%E4%B8%8A%E7%AF%87-jvm%E4%B8%8Ejava%E4%BD%93%E7%B3%BB(1)/">JVM上篇-jvm与java体系(1)</a></p>
+<span id="more"></span>
+
+<p>本节开始我们将拆分jvm各模块，今天我们盘盘类加载子系统</p>
+<h2 id="类加载子系统"><a href="#类加载子系统" class="headerlink" title="类加载子系统"></a>类加载子系统</h2><p><img src="/../../images/jvm/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E5%AD%90%E7%B3%BB%E7%BB%9F.png" alt="img.png"></p>
+<h3 id="1-类加载器与类的加载过程"><a href="#1-类加载器与类的加载过程" class="headerlink" title="1. 类加载器与类的加载过程"></a>1. 类加载器与类的加载过程</h3><h4 id="1-1-类加载器子系统的作用"><a href="#1-1-类加载器子系统的作用" class="headerlink" title="1.1 类加载器子系统的作用"></a>1.1 类加载器子系统的作用</h4><ul>
+<li>类加载器子系统负责从文件系统或者网络中加载class文件，class文件在文件开头有特定的文件标识</li>
+<li>ClassLoader只负责class文件的加载，至于它是否可以运行，则取决于执行引擎(Execution Engine)</li>
+<li>加载的类信息存放于方法区，方法区内还会存放运行时常量池信息，可能还包括字符串字面量和数字常量</li>
+</ul>
+<h4 id="1-2-类加载器ClassLoader"><a href="#1-2-类加载器ClassLoader" class="headerlink" title="1.2 类加载器ClassLoader"></a>1.2 类加载器ClassLoader</h4><ul>
+<li>class file存在于本地硬盘上，可以理解为设计师画在纸上的模板，而最终在使用的时候，需要将这个模板加载到jvm中实例化出n个一模一样的实例来使用</li>
+<li>class file加载到jvm中，被称为DNA元数据模板,放在方法区</li>
+<li>在.class文件到JVM，再到元数据模板，这个过程需要类装载器(Class Loader)来完成</li>
+</ul>
+<h4 id="1-3-类的加载过程"><a href="#1-3-类的加载过程" class="headerlink" title="1.3 类的加载过程"></a>1.3 类的加载过程</h4><p>编写一个简单的类，以下通过尝试加载这个类来说明加载过程</p>
+<pre><code class="java">public class HelloLoader &#123;
+    public static void main(String[] args) &#123;
+        System.out.println(&quot;Hello World!&quot;);
+    &#125;
+&#125;
+</code></pre>
+<p>加载过程流程图<br><img src="/../../images/jvm/%E7%B1%BB%E5%8A%A0%E8%BD%BD%E8%BF%87%E7%A8%8B%E6%B5%81%E7%A8%8B%E5%9B%BE.png" alt="img.png"></p>
+<ul>
+<li>通过一个类的全限定名获取定义此类的二进制字节流</li>
+<li>将这个字节流所代表的静态存储结构转化为方法区的运行时数据结构<blockquote>
+<p>java类在编译后会生成一个二进制字节码文件(.class文件),其中包括了该类的代码，静态变量，常量池等信息。当需要使用该类时，jvm会将该类的二进制文件读入内存，并且将其转化为JVM内部的数据结构，<br>以便于后续执行该类的方法。<br>这个转化过程主要涉及到将二进制文件中的各种信息解析出来，然后按照JVM的要求组织成对应的运行时数据结构，这个运行时数据结构通常存储在方法区中，包括类的方法表、字段表、常量池、接口表等信息。这些数据结构会在类加载、链接和初始化等阶段被使用，用于支持JVM对java程序的执行</p>
+</blockquote>
+</li>
+<li>在内存中生成一个代表这个类的java.lang.Class对象，作为方法区这个类的各种数据的访问入口</li>
+</ul>
+<h4 id="1-4-链接阶段"><a href="#1-4-链接阶段" class="headerlink" title="1.4 链接阶段"></a>1.4 链接阶段</h4><ul>
+<li>验证<ul>
+<li>确保Class文件的字节流中包含信息符合当前虚拟机要求，保证被加载类的正确性，不会危害虚拟机自身安全</li>
+<li>主要包括四种验证<ol>
+<li>文件格式验证</li>
+<li>元数据验证</li>
+<li>字节码验证</li>
+<li>符号引用验证</li>
+</ol>
+</li>
+</ul>
+</li>
+<li>准备<ul>
+<li>为类变量分配内存并且设置改类变量的默认初始值，即零值</li>
+<li>这里不包含用final修饰的static，因为final在编译的时候就会分配了，准备阶段会进行显示初始化</li>
+<li>这里不会为实例变量分配初始化，类变量会分配在方法区中，而实例变量会随着对象一起分配到java堆中</li>
+</ul>
+</li>
+<li>解析<ul>
+<li>将常量池内的符号引用转换为直接引用的过程<blockquote>
+<p>在《java虚拟机规范》中，符号引用是指在编译期或运行期需要用到一些类、接口、字段或方法时所使用的一种标志方式，符号引用并不直接指向内存中的实际对象，而是通过某个中间介质来定位目标对象。<br>符号引用由两部分组成：符号引用名和描述符。其中符号引用名是一个字符串，用于表示所需的类、接口、字段或方法的全限定名。描述符则是对所需元素的类型及参数信息进行描述的字符串</p>
+</blockquote>
+</li>
+<li>事实上，解析操作往往会伴随着JVM在执行完初始化之后再执行</li>
+<li>符号引用就是一组符号来描述所引用的目标。符号引用的字面量形式明确定义在《java虚拟机规范》的Class文件格式中。直接引用就是直接指向目标的指针，相对偏移量或者一个间接定位到目标的句柄</li>
+<li>解析动作主要针对类或接口、字段、类方法、接口方法、方法类型等，对应常量池中的CONSTANT_Class_info、CONSTANT_Fieldref_info、CONSTANT_Methodref_info</li>
+</ul>
+</li>
+</ul>
+<h4 id="1-5-初始化阶段"><a href="#1-5-初始化阶段" class="headerlink" title="1.5 初始化阶段"></a>1.5 初始化阶段</h4><ul>
+<li>初始化阶段就是执行类构造器方法&lt;clinit&gt;()的过程</li>
+<li>此方法不需要定义，是javac编译器自动收集类中的所有类变量的赋值动作和静态代码块中的语句合并而来<blockquote>
+<p>简单来说，如果程序中无静态变量和静态代码块时，则不会出现&lt;clinit&gt;()</p>
+</blockquote>
+</li>
+<li>构造器方法中指令按语句在原文件中出现的顺序执行</li>
+<li>&lt;clinit&gt;()不同于类的构造器 (构造器是虚拟机视角下&lt;init&gt;())</li>
+<li>若该类具有父类，JVM会保证子类的&lt;clinit&gt;()执行前，父类的&lt;clinit&gt;()已经执行完成</li>
+<li>虚拟机必须保证一个类的&lt;clinit&gt;()方法在多线程下被同步加锁</li>
+</ul>
+<pre><code class="java">/**
+ * 虚拟机必须保证一个类的&lt;clinit&gt;()方法在多线程下被同步加锁
+ */
+public class JvmTest &#123;
+
+    public static void main(String[] args) throws InterruptedException &#123;
+        Runnable runnable = () -&gt; &#123;
+            System.out.println(Thread.currentThread().getName() + &quot;开始执行&quot;);
+            ThreadTest threadTest = new ThreadTest();
+            System.out.println(Thread.currentThread().getName() + &quot;结束执行&quot;);
+        &#125;;
+        Thread t1 = new Thread(runnable);
+        Thread t2 = new Thread(runnable);
+        t1.start();
+        t2.start();
+    &#125;
+&#125;
+class ThreadTest &#123;
+
+    static &#123;
+        System.out.println(Thread.currentThread().getName() + &quot;正在初始化&quot;);
+    &#125;
+&#125;
+</code></pre>
+<p>执行结果<br><img src="/../../images/jvm/clinit%E5%A4%9A%E7%BA%BF%E7%A8%8B%E4%B8%8B%E5%90%8C%E6%AD%A5%E5%8A%A0%E9%94%81%E9%AA%8C%E8%AF%81%E7%BB%93%E6%9E%9C.png" alt="img.png"></p>
+<h3 id="2-类加载器分类"><a href="#2-类加载器分类" class="headerlink" title="2 类加载器分类"></a>2 类加载器分类</h3><p>JVM支持两种类加载器</p>
+<ul>
+<li>引导类加载器</li>
+<li>自定义类加载器<blockquote>
+<p>从概念上来讲，自定义类加载器一般指的是程序中由开发人员自定义的一类加载器，但是java虚拟机规范缺没有定义，而是将所以派生于抽象类ClassLoader的类加载器都划分为自定义类加载器</p>
+</blockquote>
+</li>
+</ul>
+<h4 id="2-1-虚拟机自带的加载器"><a href="#2-1-虚拟机自带的加载器" class="headerlink" title="2.1 虚拟机自带的加载器"></a>2.1 虚拟机自带的加载器</h4><ul>
+<li>引导类加载器(Bootstrap ClassLoader)<ul>
+<li>嵌套在JVM内部，由C&#x2F;C++语言实现</li>
+<li>用来加载java核心库(jre&#x2F;lib&#x2F;rt.jar、resources.jar、 sun.boot.class.path下的内容),加载的类主要用于jvm自身</li>
+<li>并不继承java.class.ClassLoader，没有父加载器</li>
+<li>为扩展类加载器和系统类加载器的父加载器，在加载时加载他们</li>
+<li>出于安全考虑，该加载器只会加载包名为java、javax、sun开头的类</li>
+</ul>
+</li>
+<li>扩展类加载器(Extension ClassLoader)<ul>
+<li>java语言开发，由sun.misc.Launcher$ExtClassLoader实现</li>
+<li>派生于java.class.ClassLoader类</li>
+<li>父加载器为引导类加载器</li>
+<li>从java.ext.dirs系统属性所指定的目录中加载类库，或从JDK的安装目录的jre&#x2F;lib&#x2F;ext下加载类库，如果用户创建的JAR放在此目录下，也会自动由扩展类加载器加载</li>
+</ul>
+</li>
+<li>系统类加载器(App ClassLoader)<ul>
+<li>java语言开发，由sun.misc.Launcher$AppClassLoader实现</li>
+<li>派生于java.class.ClassLoader类</li>
+<li>父加载器为引导类加载器</li>
+<li>它负责加载环境变量classpath或系统属性java.class.path指定路径下的类库</li>
+<li>是程序的默认类加载器，一般说来，java应用的类都是由它来完加载</li>
+<li>通过ClassLoader#getSystemClassLoader()方法可以获取到该加载器</li>
+</ul>
+</li>
+</ul>
+<h4 id="2-2-用户自定义类加载器"><a href="#2-2-用户自定义类加载器" class="headerlink" title="2.2 用户自定义类加载器"></a>2.2 用户自定义类加载器</h4><p>为什么要自定义类加载器?</p>
+<ul>
+<li>隔离加载类</li>
+<li>修改类加载的方式</li>
+<li>扩展加载源</li>
+<li>防止源码泄露</li>
+</ul>
+<p>如何自定义类加载器？</p>
+<ul>
+<li>继承java.lang.ClassLoader类，即可实现自己的类加载器，以满足一些特定的需求</li>
+<li>在JDK1.2之前需要重写loadClass()方法，在1.2之后只需要重写findClass()即可</li>
+<li>如果没有过于复杂的需求是，只需要继承URLClassLoader即可，可以省去重写findClass()及获取字节码流的过程，使得实现过程变的简单</li>
+</ul>
+<h4 id="2-3-ClassLoader的使用说明"><a href="#2-3-ClassLoader的使用说明" class="headerlink" title="2.3 ClassLoader的使用说明"></a>2.3 ClassLoader的使用说明</h4><p>ClassLoader是一个抽象类，除了引导类加载器之外，其他加载器都需要继承它</p>
+<pre><code class="java">getParent() //返回该类加载器的父类加载器
+loadClass(String name) //加载名称为name的类，返回java.lang.Class类的实例
+findClass(String name) //查找名称为name的类，返回java.lang.Class类的实例
+findLoadClass(String name) //查找名称为name的已经被加载过的类，返回java.lang.Class类的实例
+defineClass(String name, byte[] b, int iff, int len) //把字节数组b中的内容转换为一个java类，返回结果为java.lang.Class类的实例
+resolveClass(Class&lt;?&gt; c) //连接指定的一个java类
+</code></pre>
+<p>获取ClassLoader的途径</p>
+<ul>
+<li>获取当前ClassLoader</li>
+</ul>
+<pre><code class="java">clazz.getClassLoader()
+</code></pre>
+<ul>
+<li>获取当前线程上下文的ClassLoader</li>
+</ul>
+<pre><code class="java">Thread.currentThread().getContextClassLoader()
+</code></pre>
+<ul>
+<li>获取系统的ClassLoader</li>
+</ul>
+<pre><code class="java">ClassLoader.getSystemClassLoader()
+</code></pre>
+<ul>
+<li>获取调用者的ClassLoader</li>
+</ul>
+<pre><code class="java">DriverManager.getCallerClassLoader() 
+</code></pre>
+<h4 id="2-4-双亲委派机制"><a href="#2-4-双亲委派机制" class="headerlink" title="2.4 双亲委派机制"></a>2.4 双亲委派机制</h4><p>java虚拟机对class文件采用的是按需加载的方式，也就是说当需要使用该类时才会将它的class文件加载到内存生成class对象，而且加载某个类的class文件时，java虚拟机采用的是双亲委派机制，也就是把加载请求交给父类，由父类进行加载，这是一种任务委派模式</p>
+<p>执行流程</p>
+<ul>
+<li>如果一个类加载器收到了类加载的请求，它并不会自己先加载，而是把请求委托给父类的加载器去执行</li>
+<li>如果父类加载器还有父加载器，则进一步向上委托，直到将请求委托给了引导类加载器，由于引导类加载器没有父加载器，所以到此为向上委托的终点</li>
+<li>如果父类加载器可以完成加载任务，则成功返回，如果父类加载器无法完成加载任务，此时子加载器才会进行加载任务，这就是双亲委派机制</li>
+</ul>
+<p>机制优势</p>
+<ul>
+<li>避免类的重复加载</li>
+<li>沙箱安全机制：保护程序安全，防止核型API被篡改</li>
+</ul>
+<h4 id="2-5-小问题"><a href="#2-5-小问题" class="headerlink" title="2.5 小问题"></a>2.5 小问题</h4><h5 id="2-5-1-如何判断两个class对象是否相同"><a href="#2-5-1-如何判断两个class对象是否相同" class="headerlink" title="2.5.1 如何判断两个class对象是否相同"></a>2.5.1 如何判断两个class对象是否相同</h5><p>jvm中表示两个class对象是否为同一个类存在的两个必要条件</p>
+<ul>
+<li>类的完全类名必须一致，包括包名</li>
+<li>加载这个类的ClassLoader必须相同<br>换句话说，在jvm中，即使两个类对象来源于同一个Class文件，被同一个虚拟机加载，但只要加载他们的ClassLoader实例对象不同，那么这两个类对象也是不相等的</li>
+</ul>
+
+    </div>
+    
+    
+    
+    
+    
+    
+    
+</div>
+
+                <footer id="footer">
+    <div id="footer-wrap">
+        <div>
+            &copy;
+            2023 - 2023 小鸡吃米
+            <span id="footer-icon">
+                <i class="fa-solid fa-font-awesome fa-fw"></i>
+            </span>
+            &commat;Hubery Li
+        </div>
+        <div>
+            Based on the <a target="_blank" rel="noopener" href="https://hexo.io">Hexo Engine</a> &amp;
+            <a target="_blank" rel="noopener" href="https://github.com/argvchs/hexo-theme-particlex">ParticleX Theme</a>
+        </div>
+        
+    </div>
+</footer>
+
+            </div>
+            </transition>
+            
+            <transition name="fade">
+            <div id="preview" ref="preview" v-show="previewShow">
+                <img id="preview-content" ref="previewContent" />
+            </div>
+            </transition>
+            
+        </div>
+        <script src="/js/main.js"></script>
+        
+        
+
+
+
+
+        
+    </body>
+</html>

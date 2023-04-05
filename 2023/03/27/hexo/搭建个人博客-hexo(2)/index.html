@@ -1,0 +1,279 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>快速搭建hexo个人博客(2) | 小鸡吃米</title>
+        <meta name="author" content="Hubery Li" />
+        <meta name="description" content="" />
+        <meta name="keywords" content="" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+        <link rel="icon" href="/images/hexo/baby2.png" />
+
+<!--        爱心点击样式-->
+<!--        <script type="text/javascript" src="/js/click-love.js"></script>-->
+
+<!--        鼠标点击爆炸烟花和特效-->
+        <canvas id="fireworks" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 32767"></canvas>
+        <script type="text/javascript" src="https://cdn.staticfile.org/animejs/3.2.1/anime.min.js"></script>
+        <script type="text/javascript" src="/js/fireworks.js"></script>
+        <canvas id="background" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1"></canvas>
+        <script type="text/javascript" src="/js/background.js"></script>
+        <div id="cursor"></div>
+        <link rel="stylesheet" href="/css/cursor.min.css">
+        <script type="text/javascript" src="/js/cursor.min.js"></script>
+
+        <script src="https://cdn.staticfile.org/vue/3.2.47/vue.global.prod.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.3.0/css/all.min.css" />
+<link rel="stylesheet" href="/css/fonts.min.css" />
+<script> const mixins = {}; </script>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+
+<script src="https://cdn.staticfile.org/highlight.js/11.7.0/highlight.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://cdn.staticfile.org/highlight.js/11.7.0/styles/github.min.css"
+/>
+<script src="/js/lib/highlight.js"></script>
+
+
+
+<script src="/js/lib/preview.js"></script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/main.css" />
+
+    <meta name="generator" content="Hexo 6.3.0"></head>
+    <body>
+        <div id="layout">
+            <transition name="fade">
+            <div id="loading" v-show="loading">
+                <div id="loading-circle">
+                    <h2>LOADING</h2>
+                    <p>加载过慢请开启缓存&ensp;浏览器默认开启</p>
+                    <img src="/images/loading.gif" />
+                </div>
+            </div>
+            </transition>
+            <transition name="into">
+            <div id="main" v-show="!loading">
+                <nav id="menu" ref="menu">
+    <div class="desktop-menu">
+        <a class="title" href="/">
+            <span>小鸡吃米</span>
+        </a>
+        
+        <a href="/">
+            <i class="fa-solid fa-house fa-fw"></i>
+            <span>&ensp;Home</span>
+        </a>
+        
+        <a href="/archives">
+            <i class="fa-solid fa-box-archive fa-fw"></i>
+            <span>&ensp;Archives</span>
+        </a>
+        
+        <a href="/categories">
+            <i class="fa-solid fa-bookmark fa-fw"></i>
+            <span>&ensp;Categories</span>
+        </a>
+        
+        <a href="/tags">
+            <i class="fa-solid fa-tags fa-fw"></i>
+            <span>&ensp;Tags</span>
+        </a>
+        
+        <a href="/about">
+            <i class="fa-solid fa-id-card fa-fw"></i>
+            <span>&ensp;About</span>
+        </a>
+        
+    </div>
+    <div id="mobile-menu">
+        <div class="curtain" v-show="showMenu" @click="showMenu = !showMenu"></div>
+        <div class="title" @click="showMenu = !showMenu">
+            <i class="fa-solid fa-bars fa-fw"></i>
+            <span>&emsp;小鸡吃米</span>
+        </div>
+        <transition name="slide">
+        <div class="items" v-show="showMenu">
+            
+            <a href="/">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-house fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Home</div>
+                </div>
+            </a>
+            
+            <a href="/archives">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-box-archive fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Archives</div>
+                </div>
+            </a>
+            
+            <a href="/categories">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-bookmark fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Categories</div>
+                </div>
+            </a>
+            
+            <a href="/tags">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-tags fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Tags</div>
+                </div>
+            </a>
+            
+            <a href="/about">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-id-card fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">About</div>
+                </div>
+            </a>
+            
+        </div>
+        </transition>
+    </div>
+</nav>
+
+                <div class="article">
+    <div>
+        <h1>快速搭建hexo个人博客(2)</h1>
+    </div>
+    <div class="info">
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/3/27
+        </span>
+        
+        <span class="category">
+            <a href="/categories/%E6%95%99%E7%A8%8B/">
+                <span class="icon">
+                    <i class="fa-solid fa-bookmark fa-fw"></i>
+                </span>
+                教程
+            </a>
+        </span>
+        
+        
+        <span class="tags">
+            <span class="icon">
+                <i class="fa-solid fa-tags fa-fw"></i>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/hexo/" style="color: #03a9f4">hexo</a>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/gitee/" style="color: #ffa2c4">gitee</a>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/github/" style="color: #00bcd4">github</a>
+            </span>
+            
+        </span>
+        
+    </div>
+    
+    <div class="content" v-pre>
+        <p>本篇将介绍如何将个人博客部署到github或者gitee上面</p>
+<span id="more"></span>
+
+<h2 id="一、-部署到gitee"><a href="#一、-部署到gitee" class="headerlink" title="一、 部署到gitee"></a>一、 部署到gitee</h2><h3 id="1-新建仓库"><a href="#1-新建仓库" class="headerlink" title="1. 新建仓库"></a>1. 新建仓库</h3><blockquote>
+<p>仓库的路径格式必须是 用户名.gitee.io才行<br>比如你的gitee注册的名字是xxx, 路径就为xxx.gitee.io</p>
+</blockquote>
+<h3 id="2-安装hexo上传插件"><a href="#2-安装hexo上传插件" class="headerlink" title="2. 安装hexo上传插件"></a>2. 安装hexo上传插件</h3><pre><code class="bash">$ npm install hexo-deployer-git --save
+</code></pre>
+<h3 id="3-修改hexo仓库路径"><a href="#3-修改hexo仓库路径" class="headerlink" title="3. 修改hexo仓库路径"></a>3. 修改hexo仓库路径</h3><p><img src="/../../images/hexo/hexo%E9%85%8D%E7%BD%AE%E6%96%87%E4%BB%B6%E4%BD%8D%E7%BD%AE.png" alt="img_1.png"></p>
+<pre><code class="yaml">deploy:   
+  type: git   
+  repo: 仓库路径  
+  branch: master  
+</code></pre>
+<h3 id="4-推送仓库"><a href="#4-推送仓库" class="headerlink" title="4. 推送仓库"></a>4. 推送仓库</h3><pre><code class="bash">$ hexo d
+</code></pre>
+<h3 id="5-开启Gitee-Pages功能"><a href="#5-开启Gitee-Pages功能" class="headerlink" title="5. 开启Gitee Pages功能"></a>5. 开启Gitee Pages功能</h3><blockquote>
+<p>gitee这边如果想使用其站点功能，需要开启Gitee Pages功能,开启这个功能需要进行实名认证，<br>根据引导完成认证后，即可开启该功能</p>
+</blockquote>
+<p><img src="/../../images/hexo/%E5%BC%80%E9%80%9AgiteePages%E7%9A%84%E9%A1%B5%E9%9D%A2%E4%BD%8D%E7%BD%AE.png" alt="img.png"></p>
+<p>开通成功之后可以通过<a target="_blank" rel="noopener" href="https://xxx.gitee.io/xxx.gitee.io%E8%AE%BF%E9%97%AE">https://xxx.gitee.io/xxx.gitee.io访问</a></p>
+<h2 id="二、-部署到github"><a href="#二、-部署到github" class="headerlink" title="二、 部署到github"></a>二、 部署到github</h2><blockquote>
+<p>和gitee步骤差不多，只是不需要开启Gitee Pages功能<br>推送仓库后通过<a target="_blank" rel="noopener" href="https://xxx.github.io访问/">https://xxx.github.io访问</a></p>
+</blockquote>
+
+    </div>
+    
+    
+    
+    
+    
+    
+    
+</div>
+
+                <footer id="footer">
+    <div id="footer-wrap">
+        <div>
+            &copy;
+            2023 - 2023 小鸡吃米
+            <span id="footer-icon">
+                <i class="fa-solid fa-font-awesome fa-fw"></i>
+            </span>
+            &commat;Hubery Li
+        </div>
+        <div>
+            Based on the <a target="_blank" rel="noopener" href="https://hexo.io">Hexo Engine</a> &amp;
+            <a target="_blank" rel="noopener" href="https://github.com/argvchs/hexo-theme-particlex">ParticleX Theme</a>
+        </div>
+        
+    </div>
+</footer>
+
+            </div>
+            </transition>
+            
+            <transition name="fade">
+            <div id="preview" ref="preview" v-show="previewShow">
+                <img id="preview-content" ref="previewContent" />
+            </div>
+            </transition>
+            
+        </div>
+        <script src="/js/main.js"></script>
+        
+        
+
+
+
+
+        
+    </body>
+</html>

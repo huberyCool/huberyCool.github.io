@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>JVM上篇：本地方法接口和本地方法栈(5) | 小鸡吃米</title>
+        <meta name="author" content="Hubery Li" />
+        <meta name="description" content="" />
+        <meta name="keywords" content="" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+        <link rel="icon" href="/images/hexo/baby2.png" />
+
+<!--        爱心点击样式-->
+<!--        <script type="text/javascript" src="/js/click-love.js"></script>-->
+
+<!--        鼠标点击爆炸烟花和特效-->
+        <canvas id="fireworks" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 32767"></canvas>
+        <script type="text/javascript" src="https://cdn.staticfile.org/animejs/3.2.1/anime.min.js"></script>
+        <script type="text/javascript" src="/js/fireworks.js"></script>
+        <canvas id="background" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1"></canvas>
+        <script type="text/javascript" src="/js/background.js"></script>
+        <div id="cursor"></div>
+        <link rel="stylesheet" href="/css/cursor.min.css">
+        <script type="text/javascript" src="/js/cursor.min.js"></script>
+
+        <script src="https://cdn.staticfile.org/vue/3.2.47/vue.global.prod.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.3.0/css/all.min.css" />
+<link rel="stylesheet" href="/css/fonts.min.css" />
+<script> const mixins = {}; </script>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+
+<script src="https://cdn.staticfile.org/highlight.js/11.7.0/highlight.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://cdn.staticfile.org/highlight.js/11.7.0/styles/github.min.css"
+/>
+<script src="/js/lib/highlight.js"></script>
+
+
+
+<script src="/js/lib/preview.js"></script>
+
+
+
+
+
+
+
+
+
+<link rel="stylesheet" href="/css/main.css" />
+
+    <meta name="generator" content="Hexo 6.3.0"></head>
+    <body>
+        <div id="layout">
+            <transition name="fade">
+            <div id="loading" v-show="loading">
+                <div id="loading-circle">
+                    <h2>LOADING</h2>
+                    <p>加载过慢请开启缓存&ensp;浏览器默认开启</p>
+                    <img src="/images/loading.gif" />
+                </div>
+            </div>
+            </transition>
+            <transition name="into">
+            <div id="main" v-show="!loading">
+                <nav id="menu" ref="menu">
+    <div class="desktop-menu">
+        <a class="title" href="/">
+            <span>小鸡吃米</span>
+        </a>
+        
+        <a href="/">
+            <i class="fa-solid fa-house fa-fw"></i>
+            <span>&ensp;Home</span>
+        </a>
+        
+        <a href="/archives">
+            <i class="fa-solid fa-box-archive fa-fw"></i>
+            <span>&ensp;Archives</span>
+        </a>
+        
+        <a href="/categories">
+            <i class="fa-solid fa-bookmark fa-fw"></i>
+            <span>&ensp;Categories</span>
+        </a>
+        
+        <a href="/tags">
+            <i class="fa-solid fa-tags fa-fw"></i>
+            <span>&ensp;Tags</span>
+        </a>
+        
+        <a href="/about">
+            <i class="fa-solid fa-id-card fa-fw"></i>
+            <span>&ensp;About</span>
+        </a>
+        
+    </div>
+    <div id="mobile-menu">
+        <div class="curtain" v-show="showMenu" @click="showMenu = !showMenu"></div>
+        <div class="title" @click="showMenu = !showMenu">
+            <i class="fa-solid fa-bars fa-fw"></i>
+            <span>&emsp;小鸡吃米</span>
+        </div>
+        <transition name="slide">
+        <div class="items" v-show="showMenu">
+            
+            <a href="/">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-house fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Home</div>
+                </div>
+            </a>
+            
+            <a href="/archives">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-box-archive fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Archives</div>
+                </div>
+            </a>
+            
+            <a href="/categories">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-bookmark fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Categories</div>
+                </div>
+            </a>
+            
+            <a href="/tags">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-tags fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">Tags</div>
+                </div>
+            </a>
+            
+            <a href="/about">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-id-card fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">About</div>
+                </div>
+            </a>
+            
+        </div>
+        </transition>
+    </div>
+</nav>
+
+                <div class="article">
+    <div>
+        <h1>JVM上篇：本地方法接口和本地方法栈(5)</h1>
+    </div>
+    <div class="info">
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/4/4
+        </span>
+        
+        <span class="category">
+            <a href="/categories/%E7%AC%94%E8%AE%B0/">
+                <span class="icon">
+                    <i class="fa-solid fa-bookmark fa-fw"></i>
+                </span>
+                笔记
+            </a>
+        </span>
+        
+        
+        <span class="tags">
+            <span class="icon">
+                <i class="fa-solid fa-tags fa-fw"></i>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/jvm/" style="color: #00a596">jvm</a>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/java/" style="color: #ffa2c4">java</a>
+            </span>
+            
+        </span>
+        
+    </div>
+    
+    <div class="content" v-pre>
+        <p>接上一篇 <a href="/2023/04/02/JVM%E4%B8%8A%E7%AF%87-%E8%99%9A%E6%8B%9F%E6%9C%BA%E6%A0%88(4)/">JVM上篇-虚拟机栈(4)</a></p>
+<span id="more"></span>
+
+<h2 id="本地方法接口和本地方法栈"><a href="#本地方法接口和本地方法栈" class="headerlink" title="本地方法接口和本地方法栈"></a>本地方法接口和本地方法栈</h2><h3 id="1-本地方法接口"><a href="#1-本地方法接口" class="headerlink" title="1. 本地方法接口"></a>1. 本地方法接口</h3><h4 id="1-1-本地方法是什么？"><a href="#1-1-本地方法是什么？" class="headerlink" title="1.1 本地方法是什么？"></a>1.1 本地方法是什么？</h4><p>简单来说，一个Native Method是一个java调用非java代码的接口，该方法的实现由非java语言实现，比如C，这个机制并不是java独有</p>
+<h4 id="1-2-本地方法的作用"><a href="#1-2-本地方法的作用" class="headerlink" title="1.2 本地方法的作用"></a>1.2 本地方法的作用</h4><p>本地接口的作用是融合不同的编程语言为java所用，他的初衷是融合C&#x2F;C++程序</p>
+<h4 id="1-3-本地方法的定义标识"><a href="#1-3-本地方法的定义标识" class="headerlink" title="1.3 本地方法的定义标识"></a>1.3 本地方法的定义标识</h4><pre><code class="java">public class NativeDemo &#123;
+    public native void nativeMethodTest();
+&#125;
+</code></pre>
+<p>标识符native可以和其他java标识符连用，但是abstract除外</p>
+<blockquote>
+<p>native修饰的方法是有方法体的，而abstract修饰的方法是没有方法体的，所以不能使用abstract修饰</p>
+</blockquote>
+<h3 id="2-本地方法栈"><a href="#2-本地方法栈" class="headerlink" title="2. 本地方法栈"></a>2. 本地方法栈</h3><p>java虚拟机栈管理java方法的调用，而本地方法栈管理的是本地方法的调用</p>
+<p>本地方法栈也是线程私有的</p>
+<p>本地方法栈也是支持固定或者可动态扩展的内存大小(在内存溢出方面和虚拟机栈是相同的)</p>
+<p>本地方法是C语言实现的</p>
+<h4 id="如何使用本地方法"><a href="#如何使用本地方法" class="headerlink" title="如何使用本地方法"></a>如何使用本地方法</h4><p>首先在本地方法栈中登记native方法，在执行引擎执行时加载本地方法库</p>
+<p>当某个线程调用一个本地方法时，它就不在受虚拟机限制，和虚拟机拥有同样的权限</p>
+<ul>
+<li>本地方法可以通过本地方法接口来访问虚拟机内部的运行时数据区</li>
+<li>可以直接使用本地处理器中的寄存器</li>
+<li>直接从本地内存的堆中分配任意数量的内存</li>
+</ul>
+
+    </div>
+    
+    
+    
+    
+    
+    
+    
+</div>
+
+                <footer id="footer">
+    <div id="footer-wrap">
+        <div>
+            &copy;
+            2023 - 2023 小鸡吃米
+            <span id="footer-icon">
+                <i class="fa-solid fa-font-awesome fa-fw"></i>
+            </span>
+            &commat;Hubery Li
+        </div>
+        <div>
+            Based on the <a target="_blank" rel="noopener" href="https://hexo.io">Hexo Engine</a> &amp;
+            <a target="_blank" rel="noopener" href="https://github.com/argvchs/hexo-theme-particlex">ParticleX Theme</a>
+        </div>
+        
+    </div>
+</footer>
+
+            </div>
+            </transition>
+            
+            <transition name="fade">
+            <div id="preview" ref="preview" v-show="previewShow">
+                <img id="preview-content" ref="previewContent" />
+            </div>
+            </transition>
+            
+        </div>
+        <script src="/js/main.js"></script>
+        
+        
+
+
+
+
+        
+    </body>
+</html>
