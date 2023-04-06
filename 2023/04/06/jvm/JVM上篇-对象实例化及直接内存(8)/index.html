@@ -3,7 +3,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Tags: gitee | 小鸡吃米</title>
+        <title>JVM上篇：对象实例化及直接内存(8) | 小鸡吃米</title>
         <meta name="author" content="HuberyCool" />
         <meta name="description" content="" />
         <meta name="keywords" content="" />
@@ -41,6 +41,10 @@
 
 
 <script src="/js/lib/preview.js"></script>
+
+
+
+
 
 
 
@@ -153,135 +157,57 @@
     </div>
 </nav>
 
-                <div id="archives">
-    
-    <div class="categories-tags">
+                <div class="article">
+    <div>
+        <h1>JVM上篇：对象实例化及直接内存(8)</h1>
+    </div>
+    <div class="info">
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/4/6
+        </span>
         
-        
-        <span>
-            <a href="/tags/hexo/" style="background: #03a9f4">
+        <span class="category">
+            <a href="/categories/%E7%AC%94%E8%AE%B0/">
                 <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
+                    <i class="fa-solid fa-bookmark fa-fw"></i>
                 </span>
-                hexo
+                笔记
             </a>
         </span>
         
         
-        
-        <span>
-            <a href="/tags/gitee/" style="background: linear-gradient(120deg, #9abbf7 0%, #ffbbf4 100%)">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                gitee
-            </a>
+        <span class="tags">
+            <span class="icon">
+                <i class="fa-solid fa-tags fa-fw"></i>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/java/" style="color: #03a9f4">java</a>
+            </span>
+            
         </span>
-        
-        
-        
-        
-        
-        <span>
-            <a href="/tags/github/" style="background: #03a9f4">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                github
-            </a>
-        </span>
-        
-        
-        
-        <span>
-            <a href="/tags/node-js/" style="background: #00a596">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                node.js
-            </a>
-        </span>
-        
-        
-        
-        <span>
-            <a href="/tags/git/" style="background: #00bcd4">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                git
-            </a>
-        </span>
-        
-        
-        
-        <span>
-            <a href="/tags/jvm/" style="background: #ffa2c4">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                jvm
-            </a>
-        </span>
-        
-        
-        
-        <span>
-            <a href="/tags/java/" style="background: #00bcd4">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                java
-            </a>
-        </span>
-        
         
     </div>
     
-    <div class="timeline">
-        <div class="timeline-tail"></div>
-        <div class="timeline-content">
-            <div class="item-time">2023/3/27</div>
-            <a href="/2023/03/27/hexo/%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2-hexo(2)/">
-                <h3>快速搭建hexo个人博客(2)</h3>
-            </a>
-            <div class="info">
-                
-                <span class="category">
-                    <a href="/categories/%E6%95%99%E7%A8%8B/">
-                        <span class="icon">
-                            <i class="fa-solid fa-bookmark fa-fw"></i>
-                        </span>
-                        教程
-                    </a>
-                </span>
-                
-                
-                <span class="tags">
-                    <span class="icon">
-                        <i class="fa-solid fa-tags fa-fw"></i>
-                    </span>
-                    
-                    <span class="tag">
-                        
-                        <a href="/tags/hexo/" style="color: #00bcd4">hexo</a>
-                    </span>
-                    
-                    <span class="tag">
-                        
-                        <a href="/tags/gitee/" style="color: #ff7d73">gitee</a>
-                    </span>
-                    
-                    <span class="tag">
-                        
-                        <a href="/tags/github/" style="color: #ff7d73">github</a>
-                    </span>
-                    
-                </span>
-                
-            </div>
-        </div>
+    <div class="content" v-pre>
+        <p>接上一篇 <a href="/2023/04/04/jvm/JVM%E4%B8%8A%E7%AF%87-%E6%96%B9%E6%B3%95%E5%8C%BA(7)/">JVM上篇-方法区(7)</a></p>
+<span id="more"></span>
     </div>
+    
+    
+    
+    
+    
+    
     
 </div>
 
@@ -314,6 +240,12 @@
             
         </div>
         <script src="/js/main.js"></script>
+        
+        
+
+
+
+
         
     </body>
 </html>
