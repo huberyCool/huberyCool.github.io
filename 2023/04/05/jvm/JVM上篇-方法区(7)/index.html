@@ -186,12 +186,12 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #00a596">jvm</a>
+                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
             </span>
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #03a9f4">java</a>
+                <a href="/tags/java/" style="color: #ffa2c4">java</a>
             </span>
             
         </span>
@@ -241,7 +241,45 @@
 <li>如果是内存泄露，可进一步通过工具查看泄露对象到GC Roots的引用链。于是就能找到泄露对象是通过怎样的路径与GC Roots相关联并导致垃圾收集器无法自动回收它们的。掌握了泄露对象的类型信息，以及GC Roots引用链的信息，就可以比较准确的定位出泄露代码的位置了</li>
 <li>如果不存在内存泄露，那就应当检查虚拟机的堆参数(-Xms和-Xmx)，与物理内存对比看是否还可以调大，从代码上检查是否存在某些对象生命周期过长，持有状态过长的情况，尝试减少程序运行期的内存消耗</li>
 </ol>
-<h3 id="4-方法区的内部结构"><a href="#4-方法区的内部结构" class="headerlink" title="4. 方法区的内部结构"></a>4. 方法区的内部结构</h3>
+<h3 id="4-方法区的内部结构"><a href="#4-方法区的内部结构" class="headerlink" title="4. 方法区的内部结构"></a>4. 方法区的内部结构</h3><h4 id="4-1-方法区存储了什么？"><a href="#4-1-方法区存储了什么？" class="headerlink" title="4.1 方法区存储了什么？"></a>4.1 方法区存储了什么？</h4><p>《深入理解java虚拟机》书中对方法区存储内容描述如下：</p>
+<blockquote>
+<p>它用于存储已被虚拟机加载的类型信息、常量、静态变量、即时编译器编译后的代码缓存等</p>
+</blockquote>
+<ul>
+<li>类型信息</li>
+<li>运行时常量池</li>
+<li>静态变量</li>
+<li>JIT代码缓存</li>
+<li>域信息</li>
+<li>方法信息</li>
+</ul>
+<h4 id="4-2-内部结构"><a href="#4-2-内部结构" class="headerlink" title="4.2 内部结构"></a>4.2 内部结构</h4><h5 id="类型信息"><a href="#类型信息" class="headerlink" title="类型信息"></a>类型信息</h5><p>对每个加载的类型(class、interface、enum、annotation),JVM必须在方法区中存储一下类型信息</p>
+<ol>
+<li>这个类型的完整有效名称(包名+类名)</li>
+<li>这个类型直接父类的完整有效名，interface和java.lang.Object没有父类就不存</li>
+<li>这个类型的修饰符(public、abstract、final的某个子集)</li>
+<li>这个类型直接接口的一个有序列表</li>
+</ol>
+<h5 id="域信息"><a href="#域信息" class="headerlink" title="域信息"></a>域信息</h5><p>JVM必须在方法区中保存类型的所有域相关的信息以及域的声明顺序</p>
+<p>域的相关信息包括</p>
+<ul>
+<li>域名称</li>
+<li>域类型</li>
+<li>域修饰符(public、private、protected、static、final、volatile、transient的某个子集)</li>
+</ul>
+<h5 id="方法信息"><a href="#方法信息" class="headerlink" title="方法信息"></a>方法信息</h5><p>JVM必须保存所有方法的以下信息，同域信息一样，包括声明顺序</p>
+<ul>
+<li>方法名称</li>
+<li>方法的返回类型(或void)</li>
+<li>方法参数的数量和类型(按顺序)</li>
+<li>方法的修饰符(public、private、protected、static、final、synchronized、native、abstract的一个子集)</li>
+<li>方法的字节码(bytecodes)、操作数栈、局部变量表及大小(abstract和native方法除外)</li>
+<li>异常表(abstract和native方法除外)<ul>
+<li>每个异常处理的开始位置、结束位置、代码处理在程序计数器中的偏移地址、被捕获的异常类的常量池索引</li>
+</ul>
+</li>
+</ul>
+
     </div>
     
     
