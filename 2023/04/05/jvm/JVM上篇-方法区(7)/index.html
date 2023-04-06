@@ -191,7 +191,7 @@
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #ff7d73">java</a>
+                <a href="/tags/java/" style="color: #03a9f4">java</a>
             </span>
             
         </span>
@@ -202,7 +202,46 @@
         <p>接上一篇 <a href="/2023/04/04/jvm/JVM%E4%B8%8A%E7%AF%87-%E5%A0%86(6)/">JVM上篇-本地方法接口和本地方法栈(5)</a></p>
 <span id="more"></span>
 
-<h2 id="方法区"><a href="#方法区" class="headerlink" title="方法区"></a>方法区</h2>
+<h2 id="方法区"><a href="#方法区" class="headerlink" title="方法区"></a>方法区</h2><h3 id="1-堆、栈、方法区的关系"><a href="#1-堆、栈、方法区的关系" class="headerlink" title="1. 堆、栈、方法区的关系"></a>1. 堆、栈、方法区的关系</h3><p><img src="/../../images/jvm/%E5%A0%86%E3%80%81%E6%A0%88%E3%80%81%E6%96%B9%E6%B3%95%E5%8C%BA%E7%9A%84%E5%85%B3%E7%B3%BB.png" alt="img.png"></p>
+<p>栈中本地变量表中的reference指向了堆中的对象实例数据，而堆中的对象实例数据中的对象类型数据指针指向了方法区中的对象类型数据</p>
+<h3 id="2-方法区的理解"><a href="#2-方法区的理解" class="headerlink" title="2. 方法区的理解"></a>2. 方法区的理解</h3><h4 id="2-1-方法区在哪里"><a href="#2-1-方法区在哪里" class="headerlink" title="2.1 方法区在哪里"></a>2.1 方法区在哪里</h4><p>《java虚拟机规范》中明确说明，”尽管所有的方法区在逻辑上是属于堆的一部分，但一些简单的实现可能不会选择去进行垃圾收集或者压缩”</p>
+<p>但对HotspotJVM而言，方法区还有个别名，叫做非堆(Non-Heap)，目的就是为了和堆区分开</p>
+<p>所以方法区看作是一块独立于堆的内存空间</p>
+<h4 id="2-2-基本理解"><a href="#2-2-基本理解" class="headerlink" title="2.2 基本理解"></a>2.2 基本理解</h4><ul>
+<li>与java堆一样，是线程共享的内存区域</li>
+<li>其在JVM启动时被创建，并且它的实际的物理内存空间中和java堆一样，是可以不连续的</li>
+<li>大小和堆一样，可以选择固定大小或动态扩展</li>
+<li>其大小决定了系统可以保存多少个类，如果系统定义了太多的类，导致方法区溢出，虚拟机同样会抛出内存溢出异常<ul>
+<li>java.lang.OutOfMemoryError: PermGen space</li>
+<li>java.lang.OutOfMemoryError: Metaspace</li>
+</ul>
+</li>
+<li>关闭JVM就会释放这个区域的内存</li>
+</ul>
+<h4 id="2-3-HotSpot中方法区的演进"><a href="#2-3-HotSpot中方法区的演进" class="headerlink" title="2.3 HotSpot中方法区的演进"></a>2.3 HotSpot中方法区的演进</h4><p>jdk7及以前，方法区被称之为永久代，等到jdk8开始，就使用元空间代替了永久代</p>
+<p>本质上永久代和元空间并不等价，仅仅针对HotSpot而言</p>
+<p>永久代，会导致java程序更容易OOM(超过 -XX:MaxPermsize上线就会OOM)</p>
+<p>元空间的本质和永久代类似，都是对JVM规范中的方法区的实现，二者的内部结构不一样，但是二者最大的区别在于： 元空间不在虚拟机设置的内存中，而是使用本地内存</p>
+<h3 id="3-方法区参数"><a href="#3-方法区参数" class="headerlink" title="3. 方法区参数"></a>3. 方法区参数</h3><h4 id="3-1-设置方法区内存大小"><a href="#3-1-设置方法区内存大小" class="headerlink" title="3.1 设置方法区内存大小"></a>3.1 设置方法区内存大小</h4><p>方法区内存大小不必是固定的，JVM可以根据实际情况动态调整</p>
+<p>jdk7及以前</p>
+<ul>
+<li>通过设置永久代初始分配空间(-XX:Permsize)。默认值是20.75M</li>
+<li>通过设置永久代最大可分配空间(-XX:MaxPermsize)，32位机器默认是64M，64位机器默认是82M</li>
+</ul>
+<p>jdk8开始</p>
+<ul>
+<li>元空间大小可以使用参数 -XX:MetaspaceSize 和 -XX:MaxMetaspaceSize指定</li>
+<li>其默认值依赖平台，windows下，-XX:MetaspaceSize&#x3D;21M -XX:MaxMetaspaceSize&#x3D;-1无限制，分别代表初始大小和最大可用大小</li>
+<li>与永久代不同，如果不指定大小，默认情况下，虚拟机会耗尽所有的可用系统内存，如果元空间发生溢出，虚拟机一样会抛出异常 OutOfMemoryError:Metaspace</li>
+<li>对于一个64位的服务器端JVM来说，-XX:MetaspaceSize&#x3D;21M就是初始的高水位线，一旦触及这个水位线，FullGC将会被触发，然后这个高水位线将会被重置。新的高水位线的值取决于GC后释放了多少元空间，如果释放空间不足，那么不超过MaxMetaspaceSize时，适当提高该值，如果释放空间过多，则适当降低该值</li>
+<li>如果初始化的高水位线设置过低，上述高水位线调整情况会发生很多次。通过垃圾回收器的日志可以观察到FullGC多次调用。为了避免频繁GC，建议将-XX:MetaspaceSize设置为一个相对较高的值</li>
+</ul>
+<h4 id="3-2-如何解决OOM"><a href="#3-2-如何解决OOM" class="headerlink" title="3.2 如何解决OOM"></a>3.2 如何解决OOM</h4><ol>
+<li>一般的手段是通过内存映像分析工具对dump出来的堆转储快照进行分析，重点是确认内存中的对象是否都是必要的，也就是要分清楚到底出现了内存泄露(Memory Leak)还是内存溢出(Memory Overflow)</li>
+<li>如果是内存泄露，可进一步通过工具查看泄露对象到GC Roots的引用链。于是就能找到泄露对象是通过怎样的路径与GC Roots相关联并导致垃圾收集器无法自动回收它们的。掌握了泄露对象的类型信息，以及GC Roots引用链的信息，就可以比较准确的定位出泄露代码的位置了</li>
+<li>如果不存在内存泄露，那就应当检查虚拟机的堆参数(-Xms和-Xmx)，与物理内存对比看是否还可以调大，从代码上检查是否存在某些对象生命周期过长，持有状态过长的情况，尝试减少程序运行期的内存消耗</li>
+</ol>
+<h3 id="4-方法区的内部结构"><a href="#4-方法区的内部结构" class="headerlink" title="4. 方法区的内部结构"></a>4. 方法区的内部结构</h3>
     </div>
     
     
