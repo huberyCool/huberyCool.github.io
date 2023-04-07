@@ -189,12 +189,12 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #ff7d73">jvm</a>
+                <a href="/tags/jvm/" style="color: #03a9f4">jvm</a>
             </span>
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #ff7d73">java</a>
+                <a href="/tags/java/" style="color: #03a9f4">java</a>
             </span>
             
         </span>
@@ -278,7 +278,10 @@
 <ul>
 <li>相同宽度的字段总是被分在一起</li>
 <li>父类中定义的变量会在子类之前</li>
-<li>如果CompactFields参数为true(默认为true)：子类的窄变量可能插入到父类变量的空隙</li>
+<li>如果CompactFields参数为true(默认为true)：子类的窄变量可能插入到父类变量的空隙<blockquote>
+<p>在java虚拟机的内存布局中，一个对象的成员变量按照声明顺序排列，且按照其所占用的内存空间从小到大排列，这就是所谓的对象内存布局。默认情况下，java虚拟机会对成员变量进行紧凑排列，<br>也就是说，如果父类和子类中有相同类型的变量，那么父类的变量会排在子类变量的前面，这样可以避免产生空洞，提供内存使用率<br>而当CompactFields参数为true时，java虚拟机可能会将子类的窄变量插入到父类变量的空隙中，也就是说，如果子类中有一些窄变量(byte、short、boolean等都属于窄变量)，而父类中<br>有一些宽变量(int、long、double等)，那么在子类的变量和父类的变量之间可能会出现一些未使用的空隙，此时，java虚拟机可能会将子类的窄变量插入到这些空隙中，这样可以进一步提高<br>内存使用率，减少空间浪费。不过，这种操作也可能导致内存碎片化的问题，因此需要谨慎使用</p>
+</blockquote>
+</li>
 </ul>
 <h4 id="2-3-对齐填充-Padding"><a href="#2-3-对齐填充-Padding" class="headerlink" title="2.3 对齐填充(Padding)"></a>2.3 对齐填充(Padding)</h4><p>不是必须的，也没有特别的含义，仅仅起到占位的作用</p>
 <h3 id="3-对象的访问定位"><a href="#3-对象的访问定位" class="headerlink" title="3. 对象的访问定位"></a>3. 对象的访问定位</h3><p>JVM是如何通过栈帧中的对象引用访问到其内部的对象实例的呢？<br><img src="/../../images/jvm/%E6%A0%88%E5%B8%A7%E8%AE%BF%E9%97%AE%E5%86%85%E9%83%A8%E5%AF%B9%E8%B1%A1%E5%AE%9E%E4%BE%8B%E7%9A%84%E8%B7%AF%E5%BE%84.png" alt="img.png"></p>
