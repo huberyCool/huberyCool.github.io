@@ -189,12 +189,12 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #00a596">jvm</a>
+                <a href="/tags/jvm/" style="color: #ff7d73">jvm</a>
             </span>
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #00a596">java</a>
+                <a href="/tags/java/" style="color: #ff7d73">java</a>
             </span>
             
         </span>
@@ -255,6 +255,44 @@
 </li>
 </ol>
 <p>因此一般来说，new指令之后会接着执行方法，把对象按照程序进行初始化，这样一个真正可用的对象才算是被创建出来</p>
+<h5 id="给对象属性赋值的操作"><a href="#给对象属性赋值的操作" class="headerlink" title="给对象属性赋值的操作"></a>给对象属性赋值的操作</h5><ul>
+<li>属性的默认初始化</li>
+<li>显示初始化</li>
+<li>代码块的初始化</li>
+<li>构造器的初始化</li>
+</ul>
+<h3 id="2-对象内存布局"><a href="#2-对象内存布局" class="headerlink" title="2. 对象内存布局"></a>2. 对象内存布局</h3><h4 id="2-1-对象头-Header"><a href="#2-1-对象头-Header" class="headerlink" title="2.1 对象头(Header)"></a>2.1 对象头(Header)</h4><p>对象头包含了一下两部分， 如果是数组，还需要记录数组的长度</p>
+<ol>
+<li>运行时元数据(Mark Word)<ul>
+<li>哈希值</li>
+<li>GC分代年龄</li>
+<li>锁状态标志</li>
+<li>线程持有的锁</li>
+<li>偏向线程ID</li>
+<li>偏向时间戳</li>
+</ul>
+</li>
+<li>类型指针<br>指向方法区中对应类元数据InstanceKlass，确定该对象所属的类型</li>
+</ol>
+<h4 id="2-2-实例数据-Instance-Date"><a href="#2-2-实例数据-Instance-Date" class="headerlink" title="2.2 实例数据(Instance Date)"></a>2.2 实例数据(Instance Date)</h4><p>它是对象真正存储的有效信息，包括程序代码中定义的各种类型的字段(包括从父类继承下来的和本身拥有的字段)<br>存储规则</p>
+<ul>
+<li>相同宽度的字段总是被分在一起</li>
+<li>父类中定义的变量会在子类之前</li>
+<li>如果CompactFields参数为true(默认为true)：子类的窄变量可能插入到父类变量的空隙</li>
+</ul>
+<h4 id="2-3-对齐填充-Padding"><a href="#2-3-对齐填充-Padding" class="headerlink" title="2.3 对齐填充(Padding)"></a>2.3 对齐填充(Padding)</h4><p>不是必须的，也没有特别的含义，仅仅起到占位的作用</p>
+<h3 id="3-对象的访问定位"><a href="#3-对象的访问定位" class="headerlink" title="3. 对象的访问定位"></a>3. 对象的访问定位</h3><p>JVM是如何通过栈帧中的对象引用访问到其内部的对象实例的呢？<br><img src="/../../images/jvm/%E6%A0%88%E5%B8%A7%E8%AE%BF%E9%97%AE%E5%86%85%E9%83%A8%E5%AF%B9%E8%B1%A1%E5%AE%9E%E4%BE%8B%E7%9A%84%E8%B7%AF%E5%BE%84.png" alt="img.png"></p>
+<h4 id="3-1-句柄访问"><a href="#3-1-句柄访问" class="headerlink" title="3.1 句柄访问"></a>3.1 句柄访问</h4><p><img src="/../../images/jvm/%E5%8F%A5%E6%9F%84%E8%AE%BF%E9%97%AE.png" alt="img.png"></p>
+<p>reference中存储稳定的句柄地址，对象被移动(垃圾收集时会经常移动对象)时只会改变句柄中实例数据指针即可，reference本身不需要被修改</p>
+<h4 id="3-2-直接指针-HotSpot采用"><a href="#3-2-直接指针-HotSpot采用" class="headerlink" title="3.2 直接指针(HotSpot采用)"></a>3.2 直接指针(HotSpot采用)</h4><p><img src="/../../images/jvm/%E7%9B%B4%E6%8E%A5%E6%8C%87%E9%92%88.png" alt="img.png"></p>
+<p>直接指针是局部变量表中的引用，直接指向堆中的实例，在对象实例中有类型指针，指向的是方法区中的对象类型数据</p>
+<h3 id="4-直接内存-Direct-Memory"><a href="#4-直接内存-Direct-Memory" class="headerlink" title="4. 直接内存(Direct Memory)"></a>4. 直接内存(Direct Memory)</h3><h4 id="4-1-概述"><a href="#4-1-概述" class="headerlink" title="4.1 概述"></a>4.1 概述</h4><p>直接内存并不是虚拟机运行时数据区的一部分，也不是《java虚拟机规范》中定义的内存区域。直接内存是在堆外的、直接向系统申请的内存空间</p>
+<p>这个概念来源于NIO，它通过存在堆中的DirectByteBuffer操作native内存</p>
+<p>通常，访问直接内存的速度会优于访问堆的速度，所以读写直接内存的性能更高</p>
+<p>因此处于性能考虑，读写频繁的场所可能会考虑使用直接内存，这其中NIO库就允许java程序使用直接内存，用于数据缓冲区</p>
+<h4 id="4-2-非直接缓存区"><a href="#4-2-非直接缓存区" class="headerlink" title="4.2 非直接缓存区"></a>4.2 非直接缓存区</h4><p>使用IO读写文件，需要与磁盘交互，需要由用户态切换到内核态，在未设置直接缓存区的情况下，由于用户地址空间和内核地址空间是分离的，所以在两个空间内需要保存两份同样的数据，两个空间通过数据拷贝的方式传递数据，这样的效率非常低</p>
+<h4 id="4-3-直接缓存区"><a href="#4-3-直接缓存区" class="headerlink" title="4.3 直接缓存区"></a>4.3 直接缓存区</h4><p>使用NIO时，操作系统划分出直接缓存区，可以被java代码直接访问，只有一份，也就是说用户地址空间和内核地址空间都可以从这个一块空间进行数据的读取，这样效率明显高于非直接缓存区，所以NIO适合对大文件的读写操作</p>
+<p>直接内存大小可以通过MaxDirectMemorySize设置，如果不设置，默认于堆的最大值-Xmx参数值一致</p>
 
     </div>
     
