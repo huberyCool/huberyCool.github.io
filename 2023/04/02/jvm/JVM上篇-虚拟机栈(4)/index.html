@@ -189,12 +189,12 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #ff7d73">jvm</a>
+                <a href="/tags/jvm/" style="color: #03a9f4">jvm</a>
             </span>
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #03a9f4">java</a>
+                <a href="/tags/java/" style="color: #ffa2c4">java</a>
             </span>
             
         </span>
@@ -232,7 +232,7 @@
 <h3 id="1-2-虚拟机栈基本内容"><a href="#1-2-虚拟机栈基本内容" class="headerlink" title="1.2 虚拟机栈基本内容"></a>1.2 虚拟机栈基本内容</h3><h4 id="1-2-1-是什么？"><a href="#1-2-1-是什么？" class="headerlink" title="1.2.1 是什么？"></a>1.2.1 是什么？</h4><p>java虚拟机栈(Java Virtual Machine Stack)，早期也叫java栈。每个线程在创建时都会创建一个虚拟机栈，其内部保存一个个的栈帧(Stack Frame)，对应这一次次的java方法调用，是线程私有的</p>
 <h4 id="1-2-2-生命周期"><a href="#1-2-2-生命周期" class="headerlink" title="1.2.2 生命周期"></a>1.2.2 生命周期</h4><p>生命周期和线程的生命周期一致</p>
 <h4 id="1-2-3-作用"><a href="#1-2-3-作用" class="headerlink" title="1.2.3 作用"></a>1.2.3 作用</h4><p>主管java程序的运行，它保存方法的局部变量、部分结果，并参与方法的调用和返回</p>
-<h4 id="1-2-4-特点"><a href="#1-2-4-特点" class="headerlink" title="1.2.4 特点"></a>1.2.4 特点</h4><p>栈是一种快速优先的分配存储方式，访问速度仅次于程序计数器<br>JVM直接堆java栈的操作只有两个</p>
+<h4 id="1-2-4-特点"><a href="#1-2-4-特点" class="headerlink" title="1.2.4 特点"></a>1.2.4 特点</h4><p>栈是一种快速优先的分配存储方式，访问速度仅次于程序计数器<br>JVM直接对java栈的操作只有两个</p>
 <ul>
 <li>每个方法的执行，伴随着进栈(入栈、压栈)</li>
 <li>执行结束后的出栈工作</li>

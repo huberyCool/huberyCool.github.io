@@ -1,0 +1,393 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>JVM上篇：执行引擎(9) | 小鸡吃米</title>
+        <meta name="author" content="HuberyCool" />
+        <meta name="description" content="" />
+        <meta name="keywords" content="" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+        <link rel="icon" href="/images/hexo/baby2.png" />
+
+<!--        爱心点击样式-->
+<!--        <script type="text/javascript" src="/js/click-love.js"></script>-->
+
+<!--        鼠标点击爆炸烟花和特效-->
+        <canvas id="fireworks" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 32767"></canvas>
+        <script type="text/javascript" src="https://cdn.staticfile.org/animejs/3.2.1/anime.min.js"></script>
+        <script type="text/javascript" src="/js/fireworks.js"></script>
+        <canvas id="background" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1"></canvas>
+        <script type="text/javascript" src="/js/background.js"></script>
+        <div id="cursor"></div>
+        <link rel="stylesheet" href="/css/cursor.min.css">
+        <script type="text/javascript" src="/js/cursor.min.js"></script>
+
+        <script src="https://cdn.staticfile.org/vue/3.2.47/vue.global.prod.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.3.0/css/all.min.css" />
+<link rel="stylesheet" href="/css/fonts.min.css" />
+<script> const mixins = {}; </script>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+
+<script src="https://cdn.staticfile.org/highlight.js/11.7.0/highlight.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://cdn.staticfile.org/highlight.js/11.7.0/styles/github.min.css"
+/>
+<script src="/js/lib/highlight.js"></script>
+
+
+
+<script src="/js/lib/preview.js"></script>
+
+
+
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.8.0/gitalk.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.8.0/gitalk.min.css" />
+
+
+
+
+
+<link rel="stylesheet" href="/css/main.css" />
+
+    <meta name="generator" content="Hexo 6.3.0"></head>
+    <body>
+        <div id="layout">
+            <transition name="fade">
+            <div id="loading" v-show="loading">
+                <div id="loading-circle">
+                    <h2>LOADING</h2>
+                    <p>加载过慢请开启缓存&ensp;浏览器默认开启</p>
+                    <img src="/images/loading.gif" />
+                </div>
+            </div>
+            </transition>
+            <transition name="into">
+            <div id="main" v-show="!loading">
+                <nav id="menu" ref="menu">
+    <div class="desktop-menu">
+        <a class="title" href="/">
+            <span>小鸡吃米</span>
+        </a>
+        
+        <a href="/">
+            <i class="fa-solid fa-house fa-fw"></i>
+            <span>&ensp;首页</span>
+        </a>
+        
+        <a href="/archives">
+            <i class="fa-solid fa-box-archive fa-fw"></i>
+            <span>&ensp;归档</span>
+        </a>
+        
+        <a href="/categories">
+            <i class="fa-solid fa-bookmark fa-fw"></i>
+            <span>&ensp;分类</span>
+        </a>
+        
+        <a href="/tags">
+            <i class="fa-solid fa-tags fa-fw"></i>
+            <span>&ensp;标签</span>
+        </a>
+        
+        <a href="/about">
+            <i class="fa-solid fa-id-card fa-fw"></i>
+            <span>&ensp;关于</span>
+        </a>
+        
+    </div>
+    <div id="mobile-menu">
+        <div class="curtain" v-show="showMenu" @click="showMenu = !showMenu"></div>
+        <div class="title" @click="showMenu = !showMenu">
+            <i class="fa-solid fa-bars fa-fw"></i>
+            <span>&emsp;小鸡吃米</span>
+        </div>
+        <transition name="slide">
+        <div class="items" v-show="showMenu">
+            
+            <a href="/">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-house fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">首页</div>
+                </div>
+            </a>
+            
+            <a href="/archives">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-box-archive fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">归档</div>
+                </div>
+            </a>
+            
+            <a href="/categories">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-bookmark fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">分类</div>
+                </div>
+            </a>
+            
+            <a href="/tags">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-tags fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">标签</div>
+                </div>
+            </a>
+            
+            <a href="/about">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-id-card fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">关于</div>
+                </div>
+            </a>
+            
+        </div>
+        </transition>
+    </div>
+</nav>
+
+                <div class="article">
+    <div>
+        <h1>JVM上篇：执行引擎(9)</h1>
+    </div>
+    <div class="info">
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/4/7
+        </span>
+        
+        <span class="category">
+            <a href="/categories/JVM%E7%B3%BB%E5%88%97/">
+                <span class="icon">
+                    <i class="fa-solid fa-bookmark fa-fw"></i>
+                </span>
+                JVM系列
+            </a>
+        </span>
+        
+        
+        <span class="tags">
+            <span class="icon">
+                <i class="fa-solid fa-tags fa-fw"></i>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/jvm/" style="color: #00a596">jvm</a>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/java/" style="color: #00a596">java</a>
+            </span>
+            
+        </span>
+        
+    </div>
+    
+    <div class="content" v-pre>
+        <p>接上一篇 <a href="/2023/04/06/jvm/JVM%E4%B8%8A%E7%AF%87-%E5%AF%B9%E8%B1%A1%E5%AE%9E%E4%BE%8B%E5%8C%96%E5%8F%8A%E7%9B%B4%E6%8E%A5%E5%86%85%E5%AD%98(8)/">JVM上篇-方法区(7)</a></p>
+<span id="more"></span>
+
+<h2 id="执行引擎"><a href="#执行引擎" class="headerlink" title="执行引擎"></a>执行引擎</h2><h3 id="1-执行引擎概述"><a href="#1-执行引擎概述" class="headerlink" title="1. 执行引擎概述"></a>1. 执行引擎概述</h3><p>执行引擎属于JVM的下层，里面包括解释器、JIT和垃圾回收器，是虚拟机核心的组成部分之一</p>
+<p>虚拟机是相对于物理机的概念，这两种机器都有代码的执行能力，其区别是物理机的执行引擎直接建立在处理器、缓存、指令集和操作系统层面上，而虚拟机的执行引擎<br>则是由软件自行实现的，因此可以不受物理条件制约的定制指令集与执行引擎的结构体系，能够执行那些不被硬件直接支持的指令集格式</p>
+<p>JVM的主要任务时负责状态字节码到其内部，但字节码并不能直接运行在操作系统之上，因为字节码指令并非等价于本地机器指令，它内部包含的仅仅只是一些能够被JVM所能识别的字节码<br>指令、符号表以及其他辅助信息</p>
+<p>那么如果想让一个java程序运行起来，执行引擎的任务就是将字节码指令解释&#x2F;编译为对应平台的本地机器指令才可以，简单的说，JVM中的执行引擎充当了将高级语言翻译为机器语言的译者</p>
+<h4 id="1-1-执行引擎的工作流程"><a href="#1-1-执行引擎的工作流程" class="headerlink" title="1.1 执行引擎的工作流程"></a>1.1 执行引擎的工作流程</h4><ul>
+<li>执行引擎在执行的过程中究竟需要执行什么样的字节码指令完全依赖于PC寄存器，也就是程序计数器</li>
+<li>每当执行完一项指令操作后，程序计数器就会更新下一条需要被执行的指令地址</li>
+<li>当然方法在执行的过程中，执行引擎有可能会通过存储在局部变量表中的对象引用准确定位到存储在java堆区中的对象实例信息，以及通过对象头中的元数据指针定位到目标对象的类型信息</li>
+</ul>
+<h4 id="1-2-java代码编译和执行过程"><a href="#1-2-java代码编译和执行过程" class="headerlink" title="1.2 java代码编译和执行过程"></a>1.2 java代码编译和执行过程</h4><p><img src="/../../images/jvm/java%E4%BB%A3%E7%A0%81%E8%BD%AC%E6%8D%A2%E8%BF%87%E7%A8%8B.png" alt="img.png"><br>大部分程序代码转换成物理机的目标代码或虚拟机能执行的指令集之前，都需要经过上图的各个步骤</p>
+<p>java代码编译是由java源码编译器(也称作前端编译器)来完成，流程如下<br><img src="/../../images/jvm/java%E4%BB%A3%E7%A0%81%E7%BC%96%E8%AF%91%E8%BF%87%E7%A8%8B.png" alt="img.png"></p>
+<p>java字节码的执行是由JVM执行引擎(也称后端编译器)来完成，流程如下<br><img src="/../../images/jvm/java%E5%AD%97%E8%8A%82%E7%A0%81%E7%9A%84%E6%89%A7%E8%A1%8C%E8%BF%87%E7%A8%8B.png" alt="img.png"></p>
+<h5 id="1-2-1-解释器和JIT编译器"><a href="#1-2-1-解释器和JIT编译器" class="headerlink" title="1.2.1 解释器和JIT编译器"></a>1.2.1 解释器和JIT编译器</h5><ul>
+<li>解释器<blockquote>
+<p>当java虚拟机启动时会根据预定义的规范对字节码采用逐行解释的方式执行，将每行字节码文件中的内容”翻译”为对应平台的本地机器指令执行</p>
+</blockquote>
+</li>
+<li>JIT（Just In Time Compiler）<blockquote>
+<p>就是虚拟机将源代码直接编译成和本地机器平台相关的机器语言</p>
+</blockquote>
+</li>
+</ul>
+<h5 id="1-2-2-java是半编译半解释型语言"><a href="#1-2-2-java是半编译半解释型语言" class="headerlink" title="1.2.2 java是半编译半解释型语言"></a>1.2.2 java是半编译半解释型语言</h5><p>为什么是半编译半解释型，因为有了JIT的加入，使得java不仅仅是一个编译型语言</p>
+<blockquote>
+<p>当不同语言被编译器进行统一处理，成为字节码文件后，JIT会从其中寻找热点代码，并将热点代码编译成本地机器指令保存在方法区的codeCache中，不是热点代码，则接入解释器<br>然后逐行解释字节码，变成本地机器指令。</p>
+</blockquote>
+<h4 id="1-3-机器码、指令、汇编语言"><a href="#1-3-机器码、指令、汇编语言" class="headerlink" title="1.3 机器码、指令、汇编语言"></a>1.3 机器码、指令、汇编语言</h4><h5 id="1-3-1-机器码"><a href="#1-3-1-机器码" class="headerlink" title="1.3.1 机器码"></a>1.3.1 机器码</h5><p>各种用二进制编码方式表示的指令，叫做机器指令码，说白了，就是机器语言<br>机器语言虽然能够被计算机理解和接收，但和人们语言差别太大，不易被人们理解和记忆，并且用它编程容易出差错<br>用它编写的程序一经输入计算机，CPU直接读取运行，因此和其他语言编写的程序相比，执行速度更快<br>机器指令与CPU紧密相关，所以不同种类的CPU所对应的机器指令也就不同</p>
+<h5 id="1-3-2-指令"><a href="#1-3-2-指令" class="headerlink" title="1.3.2 指令"></a>1.3.2 指令</h5><p>由于机器码是由0和1组成的二进制序列，可读性极差，于是人们发明了指令<br>指令就是把机器码中特定的0和1序列，简化成对应的指令，这样能提高一定的可读性<br>由于不同的硬件平台，执行同一个操作，对应的机器码可能不同，所以不同的硬件平台的同一种指令底层对应的机器码可能是不一样的  </p>
+<h5 id="1-3-3-指令集"><a href="#1-3-3-指令集" class="headerlink" title="1.3.3 指令集"></a>1.3.3 指令集</h5><p>不同硬件平台，各自支持的指令，是有差别的。因此每个平台所支持的指令，称之为对应平台的指令集</p>
+<h5 id="1-3-4-汇编语言"><a href="#1-3-4-汇编语言" class="headerlink" title="1.3.4 汇编语言"></a>1.3.4 汇编语言</h5><p>为了进一步提高可读性问题，出现了汇编语言<br>在汇编语言中，用助记符(Mnemonics)代替机器指令的操作码，用mark地址符号(Symbol)或标号(Label)代替指令或操作数的地址，在不同的硬件平台，汇编语言对应着不同<br>的机器语言指令集，通过汇编过程转换成机器指令<br>由于计算机只认识指令码，所以用汇编语言编写的程序还必须翻译成机器指令码，计算机才能识别和执行</p>
+<h5 id="1-3-5-高级语言"><a href="#1-3-5-高级语言" class="headerlink" title="1.3.5 高级语言"></a>1.3.5 高级语言</h5><p>为了使计算机编程能够让常人能接受，于是出现了大量的高级语言，这些语言可读性更高，更容易被人理解<br>但是高级语言并不能直接被机器识别，所以在运行高级程序之前，需要将其解释和编程为机器的指令码，完成这个过程的程序我们称之为解释程序或者编译程序<br>其中编译过程又可以分为两个阶段：</p>
+<ul>
+<li>编译阶段：是读取源程序，对之进行此法和语法的分析，将高级语言指令转换为功能等效的汇编代码</li>
+<li>汇编阶段：指把汇编语言代码翻译成目标机器指令的过程</li>
+</ul>
+<h5 id="1-3-6-字节码"><a href="#1-3-6-字节码" class="headerlink" title="1.3.6 字节码"></a>1.3.6 字节码</h5><p>字节码是一种中间状态的二进制代码，它比机器码更抽象，需要直译器转译后才能成为机器码<br>字节码主要为了实现特定软件运行和软件环境，与硬件无关<br>字节码的实现方式是通过编译器和虚拟机器。编译器将源码编译成字节码，特定平台上的虚拟机器将字节码转译为可以直接执行的指令，字节码典型的应用为 java bytecode</p>
+<h4 id="1-4-解释器"><a href="#1-4-解释器" class="headerlink" title="1.4 解释器"></a>1.4 解释器</h4><p>JVM设计者们的初衷仅仅只是单纯地为了满足java程序实现跨平台特性，因此避免采用静态编译的方式直接生成本地机器指令，从而诞生了实现解释器在运行时采用逐行解释字节码执行程序的想法</p>
+<h5 id="1-4-1-解释器工作机制"><a href="#1-4-1-解释器工作机制" class="headerlink" title="1.4.1 解释器工作机制"></a>1.4.1 解释器工作机制</h5><p>解释器真正意义上所承担的角色就是一个运行时翻译者，将字节码文件中的内容翻译为对应平台的本地机器指令执行<br>当一条字节码指令被解释执行完成后，接着再根据PC寄存器中记录的下一条需要执行的字节码指令执行解释操作</p>
+<h5 id="1-4-2-解释器分类"><a href="#1-4-2-解释器分类" class="headerlink" title="1.4.2 解释器分类"></a>1.4.2 解释器分类</h5><ul>
+<li>字节码解释器<blockquote>
+<p>字节码解释器在执行时通过纯软件代码模拟字节码的执行，效率非常低</p>
+</blockquote>
+</li>
+<li>模板解释器<blockquote>
+<p>模板解释器是将每一条字节码和一个模板函数相关联，模板函数中直接产生这条字节码执行时的机器码，从而很大程度上提高了解释器的性能<br>在HitSpot VM中，解释器主要由Interpreter模块和Code模块构成</p>
+</blockquote>
+</li>
+<li>Interpreter模块实现了解释器的核心功能</li>
+<li>Code模块用于管理HotSpot VM在运行时生成的本地机器指令</li>
+</ul>
+<h4 id="1-5-JIT编译器"><a href="#1-5-JIT编译器" class="headerlink" title="1.5 JIT编译器"></a>1.5 JIT编译器</h4><p>由于解释器在设计和实现上非常简单，因此很多高级语言都同样是基于解释器执行的，但是在今天，基于解释器执行已经沦落为低效的代名词，为了解决这个问题，JVM平台支持一种叫做即时编译的技术<br>即时编译的目的是避免函数被解释执行，而是将整个函数体编译成为机器码，每次函数执行时，只执行编译后的机器码即可，这种方式可以使执行效率大幅度提升</p>
+<h5 id="1-5-1-java代码的执行分类"><a href="#1-5-1-java代码的执行分类" class="headerlink" title="1.5.1 java代码的执行分类"></a>1.5.1 java代码的执行分类</h5><ul>
+<li>第一种是将源代码编译成字节码文件，然后再运行时通过解释器将字节码文件转为机器码执行</li>
+<li>第二种是即时编译。现在虚拟机为了提高执行效率，会使用即时编译技术，将方法编译成机器码后再执行<br>HotSpot VM 是目前市面上高性能虚拟机的代表作之一，它采用解释器与即时编译并存的架构。在java虚拟机运行时，解释器和及时编译器并存的架构。在java虚拟机运行时，解释器和及时编译器能够相互协同，各自取长补短，尽力去<br>选择最合适的方式来权衡编译本地代码的时间和直接解释执行代码的时间<blockquote>
+<p>那么既然及时编译器如此高效，为什么还需要解释器呢？<br>当程序启动时，解释器可以马上发挥作用，而不必等待即时编译器全部编译完成后再执行，这样可以省去许多不必要的编译时间。随着时间的推移，编译器发挥作用，把越来越多的代码编译成本地代码，获得更高的执行效率</p>
+</blockquote>
+</li>
+</ul>
+<h5 id="1-5-2-HotSpot-VM执行方式"><a href="#1-5-2-HotSpot-VM执行方式" class="headerlink" title="1.5.2 HotSpot VM执行方式"></a>1.5.2 HotSpot VM执行方式</h5><p>当虚拟机启动的时候，解释器可以首先发挥作用，而不必等待即时编译器全部编译完成后再执行，这样可以省去许多不必要的编译时间，并且随着程序运行时间的推移，即时编译器逐渐发挥作用，根据热点探测功能，将有<br>价值的字节码编译为本地机器指令，以换取更高的程序执行效率</p>
+<h5 id="1-5-3-概念解释"><a href="#1-5-3-概念解释" class="headerlink" title="1.5.3 概念解释"></a>1.5.3 概念解释</h5><p>java语言的编译器其实是一段不确定的操作过程，因为它可能是指一个前端编译器把java文件转变成class文件的过程<br>也可能是指虚拟机的后端运行期编译器把字节码转变为机器码的过程<br>也可能是指使用静态提前编译器(AOT编译器)直接把java文件编译成本地机器代码的过程</p>
+<p>AOT编译器(静态提前编译器 - Ahead Of Time Compiler)</p>
+<blockquote>
+<p>jdk9引入了AOT编译器, 并引入了实验性AOT编译工具jaotc。它借助了Graal编译器，将所输入的java类文件转换为机器码，并存放至生成的动态共享库之中<br>所谓AOT编译，是与即时编译相对立的一个概念。即时编译指的是在程序的运行过程中，将字节码转换为可在硬件上直接运行的机器码，并部署至托管环境中的过程<br>而AOT编译指的是，在程序运行之前，便将字节码转换为机器码的过程<br>好处： Java虚拟机加载后可以直接执行，不必等待即时编译器的预热，减少java应用给人带来第一次运行慢的不良体验<br>坏处： 1、破坏了java，一次编译，到处运行的理念，必须为不同的硬件、OS编译对应的发行包 2、降低了java链接过程的动态性，加载的代码在编译期就必须全部已知<br>3、还在继续优化中，最初只支持Linux X64 java base</p>
+</blockquote>
+<h5 id="1-5-4-热点代码及探测技术"><a href="#1-5-4-热点代码及探测技术" class="headerlink" title="1.5.4 热点代码及探测技术"></a>1.5.4 热点代码及探测技术</h5><p>是否需要启动JIT即时编译器将字节码直接编译为对应平台的本地机器指令，需要根据代码被调用执行的频率而定。关于那些需要被编译为本地代码的字节码，被称之为热点代码。<br>JIT编译器在运行时会针对那些频繁被调用的热点代码做出深度优化，将其直接编译为对应平台的本地机器指令，以此提升java程序的执行性能</p>
+<p>一个被多次调用的方法或者是一个方法体内部循环次数较多的循环体都可以称之为热点代码，因此都可以通过JIT编译器编译为本地机器指令，由于这种编译方式发生在方法的执行过程中，因此被称之为栈上替换，或简称为OSR(On Stack Replacement)编译</p>
+<p>一个方法究竟要被调用多少次，或者一个循环体究竟需要执行多少次循环才可以达到这个标准，需要有一个明确的阈值，JIT编译器才会将这些热点代码编译为本地机器指令执行。这里主要依靠热点探测技术</p>
+<p>目前HotSpot VM 所采用的热点探测方式是基于计数器的热点探测,HotSpot VM将会为每个方法都建立2个不同类型的计数器</p>
+<ul>
+<li>方法调用计数器(Invocation Counter) 用于统计方法的调用次数<blockquote>
+<p>其默认阈值在Client模式下是1500次，在server模式下是10000次，超过这个阈值，就会触发JIT编译<br>这个阈值可以通过虚拟机参数 -XX:CompileThreshold来人为设定<br>当一个方法被调用时，会先检查该方法是否存在被JIT编译过的版本，如果存在，则优先使用编译后的本地代码来执行，如果不存在，则将此方法的调用计数器值增加1，然后判断方法调用计数器与回边计数器值之和是够超过方法调用计数器的阈值，如果超过，那么将会向即时编译器提交一个该方法的代码编译请求  </p>
+</blockquote>
+<blockquote>
+<p>如果不做任何设置，方法调用计数器统计的并不是方法被调用的绝对次数，而是一个相对的执行频率。即一段时间之内方法被调用的次数，当超过一定的时间限度，如果方法的调用次数仍然不足以让它提交给即时编译器编译，<br>那这个方法的调用计数器就会被减少一半，这个过程称为方法调用计数器热度的衰减(Counter Decay)，而这段时间就称为此方法统计的半衰周期(Counter Half Life Time)<br>进行热度衰减的动作是在虚拟机进行垃圾回收时顺便进行的，可以使用虚拟机参数-XX:-UseCounterDecay来关闭热度衰减，让方法计数器统计方法调用的绝对次数，这样只要系统运行时间足够长，绝大多数方法都会被编译成本地代码<br>参数 -XX:CounterHalfLifeTime设置半衰周期的时间，单位是秒</p>
+</blockquote>
+</li>
+</ul>
+<p><img src="/../../images/jvm/%E6%96%B9%E6%B3%95%E8%B0%83%E7%94%A8%E8%AE%A1%E6%95%B0%E5%99%A8%E5%88%A4%E6%96%AD%E6%B5%81%E7%A8%8B.png" alt="img.png"></p>
+<ul>
+<li>回边计数器(Back Edge Counter) 用于统计循环体执行的循环次数<blockquote>
+<p>在字节码中遇到控制流向后跳转的指令称为回边(Back Edge)，显然，建立回边计数器统计的目的就是为了触发OSR编译<br><img src="/../../images/jvm/%E5%9B%9E%E8%BE%B9%E8%AE%A1%E6%95%B0%E5%99%A8%E5%88%A4%E6%96%AD%E6%B5%81%E7%A8%8B.png" alt="img.png"></p>
+</blockquote>
+</li>
+</ul>
+<p>默认情况下HotSpot VM采用解释器和即时编译器并存的架构，也可以通过虚拟机参数来修改</p>
+<ul>
+<li>-Xint: 完全采用解释器模式执行程序</li>
+<li>-Xcomp: 完全采用即时编译器模式执行程序，如果即时编译出现问题，解释器会介入执行</li>
+<li>-Xmixed: 采用解释器+即时编译器的混合模式共同执行程序</li>
+</ul>
+<h5 id="1-5-5-HotSpot-VM中-JIT分类"><a href="#1-5-5-HotSpot-VM中-JIT分类" class="headerlink" title="1.5.5 HotSpot VM中 JIT分类"></a>1.5.5 HotSpot VM中 JIT分类</h5><p>在HotSpot VM中内嵌有两个JIT编译器，分别为Client Compiler和Server Compiler，但绝大多数我们简称为C1编译器和C2编译器，可以通过参数显示指定使用哪一种即时编译器</p>
+<ul>
+<li>-client: 指定java虚拟机运行在Client模式下，并使用C1编译器，C1编译器会对字节码进行简单和可靠的优化，耗时短，已达到更快的编译速度</li>
+<li>-server: 指定java虚拟机运行在Server模式下，并使用C2编译器，C2编译器进行耗时较长的优化，以及激进的优化，但优化的代码执行效率更高</li>
+</ul>
+<p>分层编译策略(Tiered Compilation)</p>
+<blockquote>
+<p>程序解释执行(不开启性能监控)可以触发C1编译，将字节码编译成机器码，可以进行简单的优化。<br>也可以开启性能监控，C2编译器会根据性能监控的信息进行激进优化<br>不过在java7之后，一旦开发人员在程序中显示指定命令-server是，默认将开启分层编译策略，由C1编译器和C2编译器相互协作共同来执行编译任务</p>
+</blockquote>
+<h6 id="1-5-5-1-C1和C2编译器不同的优化策略"><a href="#1-5-5-1-C1和C2编译器不同的优化策略" class="headerlink" title="1.5.5.1 C1和C2编译器不同的优化策略"></a>1.5.5.1 C1和C2编译器不同的优化策略</h6><ul>
+<li>C1<ul>
+<li>方法内联：将引用的函数代码编译到引用点处，这样可减少栈帧的生成，减少参数传递以及跳转过程</li>
+<li>去虚拟化：对唯一的实现类进行内联</li>
+<li>冗余消除：在运行期间把一些不会执行的代码折叠掉</li>
+</ul>
+</li>
+<li>C2<ul>
+<li>标量替换：用标量值代替聚合对象的属性值</li>
+<li>栈上分配：对于未逃逸的对象分配对象在栈上而不是堆上</li>
+<li>同步消除：清除同步操作，通常指synchronized(指一些并不需要加锁的地方加了synchronized，在优化时会将锁去除掉，这个过程称之为锁消除，即清除同步操作)</li>
+</ul>
+</li>
+</ul>
+<p>一般来讲，JIT编译出来的机器码性能比解释器高，C2编译器启动时长比C1慢，系统稳定执行以后，C2编译器执行速度远快于C1编译器</p>
+<h5 id="1-5-6-Graal编译器"><a href="#1-5-6-Graal编译器" class="headerlink" title="1.5.6 Graal编译器"></a>1.5.6 Graal编译器</h5><p>自JDK10起，HotSpot VM 又增加了一个全新的即时编译器: Graal编译器<br>目前该编译器还处于实验状态，可以通过参数 -XX:+UnlockExperimentalvMOptions -XX:+UseJVMCICompiler 来激活使用</p>
+
+    </div>
+    
+    
+    
+    <div id="comment">
+        <div id="gitalk-container"></div>
+    </div>
+    
+    
+    
+    
+    
+</div>
+
+                <footer id="footer">
+    <div id="footer-wrap">
+        <div>
+            &copy;
+            2023 - 2023 小鸡吃米
+            <span id="footer-icon">
+                <i class="fa-solid fa-font-awesome fa-fw"></i>
+            </span>
+            &commat;HuberyCool
+        </div>
+        <div>
+            Based on the <a target="_blank" rel="noopener" href="https://hexo.io">Hexo Engine</a> &amp;
+            <a target="_blank" rel="noopener" href="https://github.com/argvchs/hexo-theme-particlex">ParticleX Theme</a>
+        </div>
+        
+    </div>
+</footer>
+
+            </div>
+            </transition>
+            
+            <transition name="fade">
+            <div id="preview" ref="preview" v-show="previewShow">
+                <img id="preview-content" ref="previewContent" />
+            </div>
+            </transition>
+            
+        </div>
+        <script src="/js/main.js"></script>
+        
+        
+<script>
+    let clientID = "027fc91f4c543b96b6ac",
+        clientSecret = "9c96c34e744e446949239ea91761e907e6a5360e";
+    
+    const gitalk = new Gitalk({
+        clientID: clientID,
+        clientSecret: clientSecret,
+        repo: "myblogtalk",
+        owner: "huberyCool",
+        admin: ["huberyCool"],
+        language: "zh-CN",
+        id: location.pathname.substr(0, 50),
+        distractionFreeMode: false,
+        
+    })
+    gitalk.render("gitalk-container");
+</script>
+
+
+
+
+
+        
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/shizuku.model.json"},"display":{"position":"right","width":200,"height":400},"mobile":{"show":false},"rect":"opacity:0.7","log":false,"pluginJsPath":"lib/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
