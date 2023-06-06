@@ -1,0 +1,495 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>JVM上篇：StringTable(10) | 小鸡吃米</title>
+        <meta name="author" content="HuberyCool" />
+        <meta name="description" content="" />
+        <meta name="keywords" content="" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+        <link rel="icon" href="/images/hexo/baby2.png" />
+
+<!--        爱心点击样式-->
+<!--        <script type="text/javascript" src="/js/click-love.js"></script>-->
+
+<!--        鼠标点击爆炸烟花和特效-->
+        <canvas id="fireworks" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 32767"></canvas>
+        <script type="text/javascript" src="https://cdn.staticfile.org/animejs/3.2.1/anime.min.js"></script>
+        <script type="text/javascript" src="/js/fireworks.js"></script>
+        <canvas id="background" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1"></canvas>
+        <script type="text/javascript" src="/js/background.js"></script>
+        <div id="cursor"></div>
+        <link rel="stylesheet" href="/css/cursor.min.css">
+        <script type="text/javascript" src="/js/cursor.min.js"></script>
+
+        <script src="https://cdn.staticfile.org/vue/3.2.47/vue.global.prod.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.3.0/css/all.min.css" />
+<link rel="stylesheet" href="/css/fonts.min.css" />
+<script> const mixins = {}; </script>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+
+<script src="https://cdn.staticfile.org/highlight.js/11.7.0/highlight.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://cdn.staticfile.org/highlight.js/11.7.0/styles/github.min.css"
+/>
+<script src="/js/lib/highlight.js"></script>
+
+
+
+<script src="/js/lib/preview.js"></script>
+
+
+
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.8.0/gitalk.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.8.0/gitalk.min.css" />
+
+
+
+
+
+<link rel="stylesheet" href="/css/main.css" />
+
+    <meta name="generator" content="Hexo 6.3.0"></head>
+    <body>
+        <div id="layout">
+            <transition name="fade">
+            <div id="loading" v-show="loading">
+                <div id="loading-circle">
+                    <h2>LOADING</h2>
+                    <p>加载过慢请开启缓存&ensp;浏览器默认开启</p>
+                    <img src="/images/loading.gif" />
+                </div>
+            </div>
+            </transition>
+            <transition name="into">
+            <div id="main" v-show="!loading">
+                <nav id="menu" ref="menu">
+    <div class="desktop-menu">
+        <a class="title" href="/">
+            <span>小鸡吃米</span>
+        </a>
+        
+        <a href="/">
+            <i class="fa-solid fa-house fa-fw"></i>
+            <span>&ensp;首页</span>
+        </a>
+        
+        <a href="/archives">
+            <i class="fa-solid fa-box-archive fa-fw"></i>
+            <span>&ensp;归档</span>
+        </a>
+        
+        <a href="/categories">
+            <i class="fa-solid fa-bookmark fa-fw"></i>
+            <span>&ensp;分类</span>
+        </a>
+        
+        <a href="/tags">
+            <i class="fa-solid fa-tags fa-fw"></i>
+            <span>&ensp;标签</span>
+        </a>
+        
+        <a href="/about">
+            <i class="fa-solid fa-id-card fa-fw"></i>
+            <span>&ensp;关于</span>
+        </a>
+        
+    </div>
+    <div id="mobile-menu">
+        <div class="curtain" v-show="showMenu" @click="showMenu = !showMenu"></div>
+        <div class="title" @click="showMenu = !showMenu">
+            <i class="fa-solid fa-bars fa-fw"></i>
+            <span>&emsp;小鸡吃米</span>
+        </div>
+        <transition name="slide">
+        <div class="items" v-show="showMenu">
+            
+            <a href="/">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-house fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">首页</div>
+                </div>
+            </a>
+            
+            <a href="/archives">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-box-archive fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">归档</div>
+                </div>
+            </a>
+            
+            <a href="/categories">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-bookmark fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">分类</div>
+                </div>
+            </a>
+            
+            <a href="/tags">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-tags fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">标签</div>
+                </div>
+            </a>
+            
+            <a href="/about">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-id-card fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">关于</div>
+                </div>
+            </a>
+            
+        </div>
+        </transition>
+    </div>
+</nav>
+
+                <div class="article">
+    <div>
+        <h1>JVM上篇：StringTable(10)</h1>
+    </div>
+    <div class="info">
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/6/5
+        </span>
+        
+        <span class="category">
+            <a href="/categories/JVM%E7%B3%BB%E5%88%97/">
+                <span class="icon">
+                    <i class="fa-solid fa-bookmark fa-fw"></i>
+                </span>
+                JVM系列
+            </a>
+        </span>
+        
+        
+        <span class="tags">
+            <span class="icon">
+                <i class="fa-solid fa-tags fa-fw"></i>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/java/" style="color: #ff7d73">java</a>
+            </span>
+            
+        </span>
+        
+    </div>
+    
+    <div class="content" v-pre>
+        <p>接上一篇 <a href="/2023/04/06/jvm/JVM%E4%B8%8A%E7%AF%87-%E6%89%A7%E8%A1%8C%E5%BC%95%E6%93%8E(9)/">JVM上篇-执行引擎(9).md</a></p>
+<span id="more"></span>
+
+<h2 id="StringTable"><a href="#StringTable" class="headerlink" title="StringTable"></a>StringTable</h2><h3 id="1-String的基本特性"><a href="#1-String的基本特性" class="headerlink" title="1. String的基本特性"></a>1. String的基本特性</h3><ul>
+<li>String：字符串，使用一对”引起来标识</li>
+<li>String类声明为final，不可被继承</li>
+<li>String实现了Serializable接口，表示字符串是支持序列化的</li>
+<li>String实现了Comparable接口，表示字符串可以比较大小</li>
+<li>String在jdk8及以前内部定义了final char[]用于存储字符串数据，jdk9开始改为了byte[]</li>
+</ul>
+<h4 id="1-1-存储结构变更"><a href="#1-1-存储结构变更" class="headerlink" title="1.1 存储结构变更"></a>1.1 存储结构变更</h4><p>背景</p>
+<blockquote>
+<p>目前String类的实现将支付存储在一个char数组中，每个字符使用两个字节(16位)。从许多不同的应用中收集到的数据表明，字符串是堆使用的主要组成部分，此外，<br>大多数字符串对象只包含Latin-1字符，这些字符只需要一个字节的存储空间，因此这些字符串对象的内部字符数组中有一半的空间没有被使用</p>
+</blockquote>
+<p>说明</p>
+<blockquote>
+<p>将String类的内部表示方法从UTF-16字符数组改为字节数组加编码标志域。新的String类将根据字符串的内容，以ISO-8859-1&#x2F;Latin-1(每个字符一个字节)或<br>UTF-16(每个字符两个字节)的方式存储字符编码。编码标志将表明使用哪种编码，这种改动会减少内存占用，GC活动大幅减少。</p>
+</blockquote>
+<h4 id="1-2-String的基本特性"><a href="#1-2-String的基本特性" class="headerlink" title="1.2 String的基本特性"></a>1.2 String的基本特性</h4><p>String代表不可变的字符序列，即不可变性</p>
+<ul>
+<li>当对字符串重新赋值时，需要重新对指定内存区域，不能使用原有的value进行赋值</li>
+<li>当对现有的字符串进行链接操作时，也需要重新对指定内存区域，不能使用原有的value进行赋值</li>
+<li>当调用String的replace()方法修改指定字符或字符串时，也需要重新指定内存区域，不能使用原有的value进行赋值</li>
+</ul>
+<p>通过字面量的方式给一个字符串赋值，此时的字符串值申明在字符串常量池中</p>
+<p>字符串常量池是不会存储相同内容的字符串的</p>
+<p>字符串常量池是一个固定大小的Hashtable，默认大小长度是1009，如果放进字符串常量池的字符串非常多，就会造成验证的Hash冲突，从而导致链表会很长，<br>而链表长了后会导致String.intern的性能大幅下降</p>
+<p>使用 -XX:StringTablesize 可设置StringTable的长度</p>
+<ul>
+<li>在jdk6中StringTable是固定的，就是1009的长度，所以如果常量池中的字符串过多就会导致效率下降很快，StringTablesize设置没有要求</li>
+<li>在jdk7中，StringTable的长度默认值是60013，StringTablesize设置没有要求</li>
+<li>在jdk8中，设置StringTable长度的话，可设置的最小值是1009</li>
+</ul>
+<h3 id="2-String的内存分配"><a href="#2-String的内存分配" class="headerlink" title="2. String的内存分配"></a>2. String的内存分配</h3><p>在java语言中有8种基本数据类型和一种比较特殊的类型String，这些类型为了使它们在运行过程中速度更快、更节省内存，都提供了一种常量池的概念</p>
+<p>常量池就类似一个Java系统级别提供的缓存，8种基本数据类型的常量池都是系统协调的，其中String类型的常量池比较特殊。</p>
+<p>String的常量池的使用方法有两种</p>
+<ul>
+<li>直接使用双引号声明出来的String对象会直接存储在常量池中</li>
+<li>如果不是用双引号声明的String对象，可以使用String提供的intern()方法。</li>
+</ul>
+<p>jdk6及以前，字符串常量池存放在永久代<br>jdk7、jdk8将常量池调整到了堆中</p>
+<h3 id="3-String的基本操作"><a href="#3-String的基本操作" class="headerlink" title="3. String的基本操作"></a>3. String的基本操作</h3><p>java语言规范里要求完全相同的字符串字面量，应该包含同样的Unicode字符序列，并且必须是指向同一个String类实例</p>
+<pre><code class="java">class Memory &#123;
+    public static void main(String[] args) &#123;
+        int i= 1;
+        Object obj = new Object();
+        Memory mem = new Memory();
+        mem.foo(obj);
+    &#125;
+    private void foo(Object param) &#123;
+        String str = param.toString();
+        System.out.println(str);
+    &#125;
+&#125;
+</code></pre>
+<p>根据上面的代码分析一下内存分布<br><img src="/../../images/jvm/String%E7%A4%BA%E4%BE%8B%E5%86%85%E5%AD%98%E5%88%86%E5%B8%83.png" alt="img.png"></p>
+<h3 id="4-字符串拼接操作"><a href="#4-字符串拼接操作" class="headerlink" title="4. 字符串拼接操作"></a>4. 字符串拼接操作</h3><ul>
+<li>常量和常量的拼接结果在常量池，原理是编译器优化</li>
+<li>常量池不会存在相同类型的变量</li>
+<li>只要其中有一个是变量，结果就在堆中，变量拼接的原理是StringUBuilder</li>
+<li>如果拼接的结果调用intern()方法，则主动将常量池中还没有的字符串对象放入池中，并返回次对象地址</li>
+</ul>
+<p>示例1</p>
+<pre><code class="java">public class Test1 &#123;
+
+    public static void main(String[] args) &#123;
+        String s1 = &quot;abc&quot;;
+        
+        String s2 = &quot;a&quot; + &quot;b&quot; + &quot;c&quot;;
+
+        System.out.println(s1 == s2); //结果时true
+    &#125;
+&#125;
+</code></pre>
+<p>示例2</p>
+<pre><code class="java">public static void main(String[] args) &#123;
+    String s1 = &quot;javaEE&quot;;
+    String s2 = &quot;hadoop&quot;;
+
+    String s3 = &quot;javaEEhadoop&quot;;
+    String s4 = &quot;javaEE&quot; + &quot;hadoop&quot;;
+    String s5 = s1 + &quot;hadoop&quot;;
+    String s6 = &quot;javaEE&quot; + s2;
+    String s7 = s1 + s2;
+
+    System.out.println(s3 == s4); // true 编译期优化
+    System.out.println(s3 == s5); // false s1是变量，不能编译期优化
+    System.out.println(s3 == s6); // false s2是变量，不能编译期优化
+    System.out.println(s3 == s7); // false s1、s2都是变量
+    System.out.println(s5 == s6); // false s5、s6 不同的对象实例
+    System.out.println(s5 == s7); // false s5、s7 不同的对象实例
+    System.out.println(s6 == s7); // false s6、s7 不同的对象实例
+
+    String s8 = s6.intern();
+    System.out.println(s3 == s8); // true intern之后，s8和s3一样，指向字符串常量池中的&quot;javaEEhadoop&quot;
+&#125;
+</code></pre>
+<ul>
+<li>String s7 &#x3D; s1 + s2实际上是new了一个StringBuilder对象，并使用了append方法将s1和s2添加进去，最后调用了toString()方法赋给s7</li>
+</ul>
+<p>示例3</p>
+<pre><code class="java">public static void main(String[] args) &#123;
+    String s0 = &quot;beijing&quot;;
+    String s1 = &quot;bei&quot;;
+    String s2 = &quot;jing&quot;;
+    String s3 = s1 + s2;
+    System.out.println(s0 == s3); // false s3指向对象实例，s0指向字符串常量池中的&quot;beijing&quot;
+    String s7 = &quot;shanxi&quot;;
+    final String s4 = &quot;shan&quot;;
+    final String s5 = &quot;xi&quot;;
+    String s6 = s4 + s5;
+    System.out.println(s6 == s7); // true s4和s5是final修饰的，编译期就能确定s6的值了
+&#125;
+</code></pre>
+<ul>
+<li>不使用final修饰，即为变量</li>
+<li>使用final修饰，即为常量，会在编译期进行代码优化，在实际开发中，能用final，尽量使用</li>
+</ul>
+<p>字符串拼接性能对比</p>
+<pre><code class="java">public static void main(String[] args) &#123;
+    int count = 500000;
+
+    var start = System.currentTimeMillis();
+    &#123;
+        String s = &quot;&quot;;
+        for (int i = 0; i &lt; count; i++) &#123;
+            s += &quot;test&quot;;
+        &#125;
+    &#125;
+    var end = System.currentTimeMillis();
+    System.out.println(end - start); //52946
+
+    start = System.currentTimeMillis();
+    &#123;
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i &lt; count; i++) &#123;
+            sb.append(&quot;test&quot;);
+        &#125;
+    &#125;
+    end = System.currentTimeMillis();
+    System.out.println(end - start); //13
+
+    start = System.currentTimeMillis();
+    &#123;
+        StringBuffer sb = new StringBuffer();
+        for (int i = 0; i &lt; count; i++) &#123;
+            sb.append(&quot;test&quot;);
+        &#125;
+    &#125;
+    end = System.currentTimeMillis();
+    System.out.println(end - start); //13
+&#125;
+</code></pre>
+<p>可以看到，在循环50w次后，String直接拼接的方式耗时是另外两种的4000倍<br>所以在实际开发中，对于需要多次或大量拼接的操作，在不考虑线程安全的情况下，应尽可能的使用StringBuilder进行拼接<br>此外，如果提前知道需要拼接String的个数，就应该直接使用带参构造器(StringBuilder空参构造器的初始大小为16)指capacity，以减少扩容的次数</p>
+<h3 id="6-intern"><a href="#6-intern" class="headerlink" title="6. intern()"></a>6. intern()</h3><p>当调用intern()方法时，如果池子里已经包含了一个与这个String对象相等的字符串(是否相等，由equals方法确定)，那么池子里的字符串会被返回，否则，这个<br>String对象会被添加到池子里，并返回这个String对象的引用<br>所以对于两个任意字符串a和b，当且仅当a.equals(b)为true时，a.intern() &#x3D;&#x3D; b.intern()</p>
+<p>通俗来说，使用intern()就是确保字符串在内存里只有一份拷贝，这样可以节省内存空间，加快字符串操作任务的执行速度<br>下面根据一个示例说明下</p>
+<pre><code class="java">public static void main(String[] args) &#123;
+    String a = &quot;ab&quot;;
+    String b = new String(&quot;ab&quot;);
+    String c = b.intern();
+
+    System.out.println(a == b); // false
+    System.out.println(a == c); // true
+&#125;
+</code></pre>
+<p><img src="/../../images/jvm/intern%E7%9A%84%E4%BD%9C%E7%94%A8%E7%A4%BA%E4%BE%8B.png" alt="img.png"></p>
+<p>还有两种很容易混淆的情况<br>情况1</p>
+<pre><code class="java">public static void main(String[] args) &#123;
+    String s1 = new String(&quot;1&quot;);
+    s1.intern();
+    String s2 = &quot;1&quot;;
+    System.out.println(s1 == s2); // false
+&#125;
+</code></pre>
+<ol>
+<li>new String(“1”) 做了两步操作<ul>
+<li>在堆空间中创建了一个对象</li>
+<li>在字符串常量池中加入”1”这个字符串</li>
+</ul>
+</li>
+<li>s1.intern()执行这个操作后，由于常量池中已存在”1”后，所以当前操作无效，s1继续指向堆空间中new出来的对象地址</li>
+<li>String s2 &#x3D; “1” 匹配到了常量池中的”1”，所以s2指向的是常量池中”1”的地址</li>
+<li>System.out.println(s1 &#x3D;&#x3D; s2) 因此 s1 !&#x3D; s2</li>
+</ol>
+<p>情况2</p>
+<pre><code class="java">public static void main(String[] args) &#123;
+    String s3 = new String(&quot;1&quot;) + new String(&quot;1&quot;);
+    s3.intern();
+    String s4 = &quot;11&quot;;
+    System.out.println(s3 == s4); // true
+&#125;
+</code></pre>
+<ol>
+<li>String s3 &#x3D; new String(“1”) + new String(“1”) 做了两步操作<ul>
+<li>在堆空间中创建了一个对象</li>
+<li>在字符串常量池中加入”1”这个字符串<blockquote>
+<p>注意，上述的操作等价于String s3 &#x3D; new String(“11”)，区别在于，上述的操作，常量池中不会生成字符串”11”</p>
+</blockquote>
+</li>
+</ul>
+</li>
+<li>s3.intern() 执行这个操作后，由于常量池中不存在”11”，所以把s3中记录的在堆中对象的地址存入常量池</li>
+<li>String s4 &#x3D; “11” 执行这个操作后，由于在常量池中匹配到了”11”，所以将s3在堆中对象的地址赋值给s4</li>
+<li>System.out.println(s3 &#x3D;&#x3D; s4)，由于s3和s4都指向堆中的对象地址，所以相等</li>
+</ol>
+<p>总结<br>当调用intern()后：   </p>
+<ul>
+<li>如果常量池中有，则不会放入，返回已有的常量池中的对象的地址</li>
+<li>如果没有，则会把对象的引用地址复制一份，放入常量池，并返回常量池中保存的对象引用地址<br><img src="/../../images/jvm/intern%E7%A4%BA%E4%BE%8B2.png" alt="img.png"></li>
+</ul>
+<h3 id="6-StringTable的垃圾回收"><a href="#6-StringTable的垃圾回收" class="headerlink" title="6. StringTable的垃圾回收"></a>6. StringTable的垃圾回收</h3><h3 id="7-G1中的String去重操作"><a href="#7-G1中的String去重操作" class="headerlink" title="7. G1中的String去重操作"></a>7. G1中的String去重操作</h3><p>目前，许多大规模的java应用程序在内存上遇到了瓶颈。测量表明，在这些类型的应用程序中，大约25%的java堆实时数据集被String对象所消耗，此外，这些String<br>对象中大约有一半是重复的(equals为true)，在堆上有重复的String对象，从本质上讲，只是一种内存的浪费<br>因此为了解决这个问题，G1垃圾收集器实现了自动和持续的String重复数据删除的功能，以避免浪费内存，减少内存占用</p>
+<p>注意，以上说的重复，指的是堆中的数据，而不是常量池中的，因为常量池中的数据本生不会重复</p>
+<p>实现方式</p>
+<ol>
+<li>当垃圾收集器工作的时候，会访问堆上存活的对象，对每个访问的对象都会检查是否是候选的要去重的String对象</li>
+<li>如果是，把这个对象的一个引用插入到队列中等待后续的处理。一个去重的线程在后台运行，处理这个队列。处理队列的一个元素意味着从队列删除这个元素，然后尝试去重它引用的String对象</li>
+<li>使用一个Hashtable来记录所有被String对象使用的不重复的char数组，当去重的时候，会查这个Hashtable，来看堆上是否已经存在一个一模一样的char数组</li>
+<li>如果存在，String对象会被调整引用这个数组，释放对原来的数组的引用，最终会被垃圾收集器回收掉</li>
+<li>如果查找失败，char数组会被插入到Hashtable,这样以后就可以共享这个数组了</li>
+</ol>
+
+    </div>
+    
+    
+    
+    <div id="comment">
+        <div id="gitalk-container"></div>
+    </div>
+    
+    
+    
+    
+    
+</div>
+
+                <footer id="footer">
+    <div id="footer-wrap">
+        <div>
+            &copy;
+            2023 - 2023 小鸡吃米
+            <span id="footer-icon">
+                <i class="fa-solid fa-font-awesome fa-fw"></i>
+            </span>
+            &commat;HuberyCool
+        </div>
+        <div>
+            Based on the <a target="_blank" rel="noopener" href="https://hexo.io">Hexo Engine</a> &amp;
+            <a target="_blank" rel="noopener" href="https://github.com/argvchs/hexo-theme-particlex">ParticleX Theme</a>
+        </div>
+        
+    </div>
+</footer>
+
+            </div>
+            </transition>
+            
+            <transition name="fade">
+            <div id="preview" ref="preview" v-show="previewShow">
+                <img id="preview-content" ref="previewContent" />
+            </div>
+            </transition>
+            
+        </div>
+        <script src="/js/main.js"></script>
+        
+        
+<script>
+    let clientID = "027fc91f4c543b96b6ac",
+        clientSecret = "9c96c34e744e446949239ea91761e907e6a5360e";
+    
+    const gitalk = new Gitalk({
+        clientID: clientID,
+        clientSecret: clientSecret,
+        repo: "myblogtalk",
+        owner: "huberyCool",
+        admin: ["huberyCool"],
+        language: "zh-CN",
+        id: location.pathname.substr(0, 50),
+        distractionFreeMode: false,
+        
+    })
+    gitalk.render("gitalk-container");
+</script>
+
+
+
+
+
+        
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/shizuku.model.json"},"display":{"position":"right","width":200,"height":400},"mobile":{"show":false},"rect":"opacity:0.7","log":false,"pluginJsPath":"lib/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
