@@ -189,12 +189,12 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #ffa2c4">jvm</a>
+                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
             </span>
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #ffa2c4">java</a>
+                <a href="/tags/java/" style="color: #03a9f4">java</a>
             </span>
             
         </span>
@@ -355,7 +355,7 @@
     System.out.println(end - start); //13
 &#125;
 </code></pre>
-<p>可以看到，在循环50w次后，String直接拼接的方式耗时是另外两种的4000倍<br>所以在实际开发中，对于需要多次或大量拼接的操作，在不考虑线程安全的情况下，应尽可能的使用StringBuilder进行拼接<br>此外，如果提前知道需要拼接String的个数，就应该直接使用带参构造器(StringBuilder空参构造器的初始大小为16)指capacity，以减少扩容的次数</p>
+<p>可以看到，在循环50w次后，String直接拼接的方式耗时是另外两种的4000倍<br>所以在实际开发中，对于需要多次或大量拼接的操作，在不考虑线程安全的情况下，应尽可能的使用StringBuilder进行拼接<br>此外，如果提前知道需要拼接String的个数，就应该直接使用带参构造器(StringBuilder空参构造器的初始大小为16)指定capacity，以减少扩容的次数</p>
 <h3 id="6-intern"><a href="#6-intern" class="headerlink" title="6. intern()"></a>6. intern()</h3><p>当调用intern()方法时，如果池子里已经包含了一个与这个String对象相等的字符串(是否相等，由equals方法确定)，那么池子里的字符串会被返回，否则，这个<br>String对象会被添加到池子里，并返回这个String对象的引用<br>所以对于两个任意字符串a和b，当且仅当a.equals(b)为true时，a.intern() &#x3D;&#x3D; b.intern()</p>
 <p>通俗来说，使用intern()就是确保字符串在内存里只有一份拷贝，这样可以节省内存空间，加快字符串操作任务的执行速度<br>下面根据一个示例说明下</p>
 <pre><code class="java">public static void main(String[] args) &#123;
