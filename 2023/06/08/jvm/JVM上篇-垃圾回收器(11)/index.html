@@ -1,0 +1,435 @@
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <title>JVM上篇：垃圾回收器(11) | 小鸡吃米</title>
+        <meta name="author" content="HuberyCool" />
+        <meta name="description" content="" />
+        <meta name="keywords" content="" />
+        <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=0" />
+        <link rel="icon" href="/images/hexo/baby2.png" />
+
+<!--        爱心点击样式-->
+<!--        <script type="text/javascript" src="/js/click-love.js"></script>-->
+
+<!--        鼠标点击爆炸烟花和特效-->
+        <canvas id="fireworks" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 32767"></canvas>
+        <script type="text/javascript" src="https://cdn.staticfile.org/animejs/3.2.1/anime.min.js"></script>
+        <script type="text/javascript" src="/js/fireworks.js"></script>
+        <canvas id="background" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: -1"></canvas>
+        <script type="text/javascript" src="/js/background.js"></script>
+        <div id="cursor"></div>
+        <link rel="stylesheet" href="/css/cursor.min.css">
+        <script type="text/javascript" src="/js/cursor.min.js"></script>
+
+        <script src="https://cdn.staticfile.org/vue/3.2.47/vue.global.prod.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.3.0/css/all.min.css" />
+<link rel="stylesheet" href="/css/fonts.min.css" />
+<script> const mixins = {}; </script>
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+
+
+<script src="https://cdn.staticfile.org/highlight.js/11.7.0/highlight.min.js"></script>
+<link
+    rel="stylesheet"
+    href="https://cdn.staticfile.org/highlight.js/11.7.0/styles/github.min.css"
+/>
+<script src="/js/lib/highlight.js"></script>
+
+
+
+<script src="/js/lib/preview.js"></script>
+
+
+
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.8.0/gitalk.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.8.0/gitalk.min.css" />
+
+
+
+
+
+<link rel="stylesheet" href="/css/main.css" />
+
+    <meta name="generator" content="Hexo 6.3.0"></head>
+    <body>
+        <div id="layout">
+            <transition name="fade">
+            <div id="loading" v-show="loading">
+                <div id="loading-circle">
+                    <h2>LOADING</h2>
+                    <p>加载过慢请开启缓存&ensp;浏览器默认开启</p>
+                    <img src="/images/loading.gif" />
+                </div>
+            </div>
+            </transition>
+            <transition name="into">
+            <div id="main" v-show="!loading">
+                <nav id="menu" ref="menu">
+    <div class="desktop-menu">
+        <a class="title" href="/">
+            <span>小鸡吃米</span>
+        </a>
+        
+        <a href="/">
+            <i class="fa-solid fa-house fa-fw"></i>
+            <span>&ensp;首页</span>
+        </a>
+        
+        <a href="/archives">
+            <i class="fa-solid fa-box-archive fa-fw"></i>
+            <span>&ensp;归档</span>
+        </a>
+        
+        <a href="/categories">
+            <i class="fa-solid fa-bookmark fa-fw"></i>
+            <span>&ensp;分类</span>
+        </a>
+        
+        <a href="/tags">
+            <i class="fa-solid fa-tags fa-fw"></i>
+            <span>&ensp;标签</span>
+        </a>
+        
+        <a href="/about">
+            <i class="fa-solid fa-id-card fa-fw"></i>
+            <span>&ensp;关于</span>
+        </a>
+        
+    </div>
+    <div id="mobile-menu">
+        <div class="curtain" v-show="showMenu" @click="showMenu = !showMenu"></div>
+        <div class="title" @click="showMenu = !showMenu">
+            <i class="fa-solid fa-bars fa-fw"></i>
+            <span>&emsp;小鸡吃米</span>
+        </div>
+        <transition name="slide">
+        <div class="items" v-show="showMenu">
+            
+            <a href="/">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-house fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">首页</div>
+                </div>
+            </a>
+            
+            <a href="/archives">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-box-archive fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">归档</div>
+                </div>
+            </a>
+            
+            <a href="/categories">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-bookmark fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">分类</div>
+                </div>
+            </a>
+            
+            <a href="/tags">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-tags fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">标签</div>
+                </div>
+            </a>
+            
+            <a href="/about">
+                <div class="item">
+                    <div style="min-width: 20px; max-width: 50px; width: 10%">
+                        <i class="fa-solid fa-id-card fa-fw"></i>
+                    </div>
+                    <div style="min-width: 100px; max-width: 150%; width: 20%">关于</div>
+                </div>
+            </a>
+            
+        </div>
+        </transition>
+    </div>
+</nav>
+
+                <div class="article">
+    <div>
+        <h1>JVM上篇：垃圾回收器(11)</h1>
+    </div>
+    <div class="info">
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/6/8
+        </span>
+        
+        <span class="category">
+            <a href="/categories/JVM%E7%B3%BB%E5%88%97/">
+                <span class="icon">
+                    <i class="fa-solid fa-bookmark fa-fw"></i>
+                </span>
+                JVM系列
+            </a>
+        </span>
+        
+        
+        <span class="tags">
+            <span class="icon">
+                <i class="fa-solid fa-tags fa-fw"></i>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/jvm/" style="color: #ffa2c4">jvm</a>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/java/" style="color: #ff7d73">java</a>
+            </span>
+            
+        </span>
+        
+    </div>
+    
+    <div class="content" v-pre>
+        <p>接上一篇 <a href="/2023/06/05/jvm/JVM%E4%B8%8A%E7%AF%87-StringTable(10)/">JVM上篇-StringTable(10)</a></p>
+<span id="more"></span>
+
+<h2 id="垃圾回收器"><a href="#垃圾回收器" class="headerlink" title="垃圾回收器"></a>垃圾回收器</h2><h3 id="1-垃圾回收概述"><a href="#1-垃圾回收概述" class="headerlink" title="1. 垃圾回收概述"></a>1. 垃圾回收概述</h3><h4 id="1-1-什么是垃圾"><a href="#1-1-什么是垃圾" class="headerlink" title="1.1 什么是垃圾"></a>1.1 什么是垃圾</h4><p>垃圾是指在运行程序中没有任何指针指向的对象，这个对象就是需要被回收的垃圾。具体需要根据复杂的算法进行确认</p>
+<h4 id="1-2-为什么需要垃圾回收-GC"><a href="#1-2-为什么需要垃圾回收-GC" class="headerlink" title="1.2 为什么需要垃圾回收(GC)"></a>1.2 为什么需要垃圾回收(GC)</h4><p>对于高级语言来说，一个基本认知是如果不进行垃圾回收，内存迟早会被消耗殆尽，因为不断地分配内存空间而不进行回收，会使有用的内存不断减少，最终无法申请到内存<br>而在内存还够的情况下，仍然进行垃圾回收是为了整理内存区域，消除碎片，将空闲的内存变为尽可能连续的内存空间，以便给更大的对象使用</p>
+<p>早期的语言(C&#x2F;C++)，没有自动垃圾收集，代码中释放内存都需要手动完成，一旦忘记，会导致严重问题。所以现在高级语言(java、C#、python等)都使用了自动垃圾回收思想</p>
+<p>这种自动内存管理，无需开发人员手动参与内存的分配和释放，降低了内存泄露和溢出的风险，可以让卡法人员更专注于业务的开发</p>
+<h4 id="1-3-垃圾回收算法"><a href="#1-3-垃圾回收算法" class="headerlink" title="1.3 垃圾回收算法"></a>1.3 垃圾回收算法</h4><h5 id="如何判断对象是否存活"><a href="#如何判断对象是否存活" class="headerlink" title="如何判断对象是否存活"></a>如何判断对象是否存活</h5><p>在堆里存放的机会所有的java对象实例，在GC执行垃圾回收之前，首先需要区分出内存中哪些是存活对象，哪些是已经死亡的对象。只有被标记死亡的对象，GC才会在执行垃圾回收时，释放掉所占用的内存空间，因此这个过程我们称之为垃圾标记阶段<br>判断对象存活一般有两种方式</p>
+<ul>
+<li>引用计数法</li>
+<li>可达性分析算法</li>
+</ul>
+<h5 id="1-3-1-标记阶段：引用计数法"><a href="#1-3-1-标记阶段：引用计数法" class="headerlink" title="1.3.1 标记阶段：引用计数法"></a>1.3.1 标记阶段：引用计数法</h5><blockquote>
+<p>引用计数法(Reference Counting)比较简单，做法是，给每一个对象保存一个整型放入引用计数器属性，用来记录当前对象被引用的次数，一旦发现对象被引用，计数器+1，当解除引用后，计数器-1,一旦计数器清0，当前对象即视为垃圾，可对其进行垃圾回收</p>
+</blockquote>
+<h5 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h5><p>实现简单，垃圾对象便于辨识，判定效率高，回收没有延迟</p>
+<h5 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h5><ul>
+<li>它需要单独的字段存储计数器，这样的做法增加了存储空间的开销</li>
+<li>每次赋值都需要更新计数器，伴随着加法和减法操作，这增加了时间开销</li>
+<li>无法处理循环引用的情况<blockquote>
+<p>循环引用就是，多个对象在其内部互相引用，形成了一个循环，以至于引用计数无法清零，也就无法被标记为垃圾，所以无法释放内存，这就是循环引用</p>
+</blockquote>
+</li>
+</ul>
+<p>所以目前java的垃圾回收器中并没有使用引用计数法<br>通过一个测试来判断下</p>
+<pre><code class="java">public class RefCountGC &#123;
+
+    private byte[] bigSize = new byte[5 * 1024 * 1024];
+
+    Object reference = null;
+
+    /**
+     * 加vm参数 -Xlog:gc, 打印GC日志
+     * @param args
+     */
+    public static void main(String[] args) &#123;
+
+        RefCountGC o1 = new RefCountGC();
+        RefCountGC o2 = new RefCountGC();
+
+        o1.reference = o2;
+        o2.reference = o1;
+
+        o1 = null;
+        o2 = null;
+
+        System.gc();
+    &#125;
+&#125;
+</code></pre>
+<p>gc日志为<br><img src="/../../images/jvm/%E8%AF%81%E6%98%8Ejava%E4%B8%8D%E6%98%AF%E4%BD%BF%E7%94%A8%E5%BC%95%E7%94%A8%E8%AE%A1%E6%95%B0%E6%B3%95%E7%9A%84%E7%A8%8B%E5%BA%8F%E7%BB%93%E6%9E%9C.png" alt="img.png"><br>以上明显看出进行了GC动作，堆中的对象被回收掉了，由此说明JVM采用的不是引用计数法来确定垃圾<br>下图是真实的内存引用情况<br><img src="/../../images/jvm/%E5%BE%AA%E7%8E%AF%E5%BC%95%E7%94%A8%E5%86%85%E5%AD%98%E5%9B%BE.png" alt="img.png"></p>
+<h5 id="1-3-2-标记阶段：可达性分析算法"><a href="#1-3-2-标记阶段：可达性分析算法" class="headerlink" title="1.3.2 标记阶段：可达性分析算法"></a>1.3.2 标记阶段：可达性分析算法</h5><p>相对于引用计数算法，可达性分析算法不仅同样具备实现简单和执行高效等特点，更重要的是该算法可以有效地解决循环引用问题。<br>这种类型的垃圾收集通常也叫做追踪性垃圾手机(Tracing Garbage Collection)   </p>
+<h5 id="算法基本思路"><a href="#算法基本思路" class="headerlink" title="算法基本思路"></a>算法基本思路</h5><ul>
+<li>以根对象(GCRoots)集合为起始点，按照从上至下的方式搜索被根对象集合所连接的目标对象是否可达，搜索所走过的路径称为引用链(Reference Chain)</li>
+<li>通过算法分析后，内存中的存活对象都会被根对象集合直接或间接连接着</li>
+<li>如果目标对象没有任何引用链相连，则判定为不可达，意味着该对象已经死亡，可以将其标记为垃圾对象<br><img src="/../../images/jvm/%E5%8F%AF%E8%BE%BE%E6%80%A7%E5%88%86%E6%9E%90%E7%A4%BA%E4%BE%8B%E5%9B%BE1.png" alt="img.png"></li>
+</ul>
+<h5 id="哪些元素被视为GCRoots"><a href="#哪些元素被视为GCRoots" class="headerlink" title="哪些元素被视为GCRoots"></a>哪些元素被视为GCRoots</h5><ul>
+<li>栈中引用的对象<ul>
+<li>比如各个线程被调用的方法中的参数，局部变量等</li>
+</ul>
+</li>
+<li>本地方法栈内JNI引用的对象</li>
+<li>方法区中类静态属性引用的对象<ul>
+<li>java类的引用类型静态变量</li>
+</ul>
+</li>
+<li>方法区中常量引用的对象<ul>
+<li>字符串常量池里的引用</li>
+</ul>
+</li>
+<li>所有被同步锁synchronized持有的对象</li>
+<li>Java虚拟机内部的引用<ul>
+<li>基本数据类型对应的Class对象、一些常驻的异常对象(NPE、OOM等)、系统类加载器</li>
+</ul>
+</li>
+<li>反映java虚拟机内部情况的JMXBean、JVMTI中注册的回调、本地代码缓存等</li>
+</ul>
+<p>除了以上这些固定的GC Roots集合，根据用户所选用的垃圾收集器以及当前回收的内存区域不同，还可以有其他对象”临时性”地加入，共同构成完整GC Roots集合<br>如果只针对java堆中的某一块区域进行垃圾回收，必须考虑到内存区域是虚拟机自己实现细节，更不是孤立封闭的，这个区域的对象完全有可能被其他区域的对象所引用，<br>这时候就需要一并将关联的区域的对象也加入到GC Roots中去，这样才能保证可达性分析的准确性</p>
+<p>由于Root采用栈方式存放变量和指针，所以如果一个指针，它保存了堆内存里面的对象，但是自己又不存放在堆内存里面，那它就是一个Root</p>
+<h5 id="STW"><a href="#STW" class="headerlink" title="STW"></a>STW</h5><p>如果要使用可达性分析算法来判断内存是否可回收，那么分析工作必须在一个能保障一致性的快照中进行，这点不满足的话，分析结果的准确性就无法保证<br>所以在进行分析时，需要进行STW，也就是stop the world。即使是几乎不会发生停顿的CMS，在枚举根节点是也是要STW的</p>
+<h5 id="1-3-3-对象的finalization机制-finalize"><a href="#1-3-3-对象的finalization机制-finalize" class="headerlink" title="1.3.3 对象的finalization机制(finalize())"></a>1.3.3 对象的finalization机制(finalize())</h5><p>java语言提供了对象终止(finalization)机制来允许开发人员提供对象被销毁之前的自定义处理逻辑<br>当垃圾回收器在回收对钱之前，总会调用这个对象的finalize()方法<br>finalize()方法允许在子类中被重写，用于在对象被回收时进行资源释放。比如关闭文件、套接字或者数据库连接<br>永远不要主动调用finalize()方法，应该将其交给垃圾回收机制去调用，原因如下</p>
+<ol>
+<li>在finalize()时可能会导致对象复活</li>
+<li>finalize()方法的执行时间没有保障，其调用时间完全由GC线程决定，极端情况下，如果GC未发生，则finalize()永远不会被调用</li>
+<li>一个糟糕的finalize()会严重影响GC的性能</li>
+</ol>
+<p>由于finalize()的存在，虚拟机中的对象一般处于三种可能的状态</p>
+<ul>
+<li>可触及的: 也就是可达性分析时发现可以到达这个对象</li>
+<li>可复活的：可达性分析时，对象不可达，但是在垃圾回收时调用finalize()时可以复活该对象</li>
+<li>不可触及的：调用finalize()后未复活该对象，那么就会进入不可触及状态，由于finalize()只能被调用一次，因此处于不可触及状态的对象，不可被复活，也只有处于该状态下的对象才能被回收</li>
+</ul>
+<p>判定一个对象是否可被回收，至少要经历两次标记过程</p>
+<h5 id="具体过程"><a href="#具体过程" class="headerlink" title="具体过程"></a>具体过程</h5><ol>
+<li>如果对象到GC Roots没有引用链，则进行第一次标记</li>
+<li>判断此对象是否有必要执行finalize()方法</li>
+<li>如果对象没有重写finalize()方法，或者已经被调用过了，则虚拟机视为没有必要执行，对象被判定为不可触及</li>
+<li>如果对象重写finalize()方法，并且未被调用过，那么对象会被插入到F-Queue队列中，由一个虚拟机自动创建的、低优先级的Finalizer线程触发其finalize()方法执行</li>
+<li>finalize()方法是对象逃脱最后机会，稍后GC会对F-Queue队列中的对象进行第二次标记，如果对象在finalize()方法中与引用链上的任何一个对象建立了联系，那么在第二次标记时，对象会被移除即将回收集合，之后，对象会再次出现没有引用存在的情况，在这种情况下，finalize()方法不会被再次调用，对象会直接变成不可触及状态</li>
+</ol>
+<h5 id="实验"><a href="#实验" class="headerlink" title="实验"></a>实验</h5><pre><code class="java">public class FinalizeTest &#123;
+
+    //GC Roots
+    public static FinalizeTest finalizeTest;
+
+    @Override
+    protected void finalize() throws Throwable &#123;
+        super.finalize();
+        System.out.println(&quot;调用了finalize&quot;);
+        finalizeTest = this;
+    &#125;
+
+    /**
+     * 加vm参数 -Xlog:gc, 打印GC日志
+     * @param args
+     */
+    public static void main(String[] args) throws InterruptedException &#123;
+        finalizeTest = new FinalizeTest();
+        finalizeTest = null;
+        System.gc();
+        System.out.println(&quot;-----------------第一次gc操作------------&quot;);
+        Thread.sleep(2000);
+        if (null == finalizeTest) &#123;
+            System.out.println(&quot;已死亡&quot;);
+        &#125; else &#123;
+            System.out.println(&quot;存活&quot;);
+        &#125;
+
+        finalizeTest = null;
+        System.gc();
+        System.out.println(&quot;-----------------第二次gc操作------------&quot;);
+        Thread.sleep(2000);
+        if (null == finalizeTest) &#123;
+            System.out.println(&quot;已死亡&quot;);
+        &#125; else &#123;
+            System.out.println(&quot;存活&quot;);
+        &#125;
+    &#125;
+&#125;
+</code></pre>
+<p>结果是</p>
+<pre><code class="text">-----------------第一次gc操作------------
+调用了finalize
+存活
+-----------------第二次gc操作------------
+已死亡
+</code></pre>
+<h5 id="1-3-4-清除阶段算法"><a href="#1-3-4-清除阶段算法" class="headerlink" title="1.3.4 清除阶段算法"></a>1.3.4 清除阶段算法</h5><p>当成功区分出内存中存活对象和死亡对象后，GC接下来的任务就是执行垃圾回收，释放掉无用对象所占用的内存空间，以便有足够的可用空间为新对象使用<br>目前在jvm中比较常见的三种垃圾收集算法</p>
+<ul>
+<li>标记-清除算法(mark-sweep)</li>
+<li>复制算法(copying)</li>
+<li>标记压缩(mark-compact)</li>
+</ul>
+<h5 id="标记-清除算法"><a href="#标记-清除算法" class="headerlink" title="标记-清除算法"></a>标记-清除算法</h5><h6 id="执行过程"><a href="#执行过程" class="headerlink" title="执行过程"></a>执行过程</h6><p>当堆中的有效内存空间被耗尽后，发生STW，然后进行下面两项工作</p>
+<ul>
+<li>标记：Collector从引用根节点开始遍历，标记所有被引用的对象，一般是在对象的Header中记录为可达对象</li>
+<li>清除：Collector对堆内存从头到尾进行线性的遍历，如果发现某一个对象在其Header中没有标记为可达对象，则将其回收</li>
+</ul>
+<p>流程图示<br><img src="/../../images/jvm/%E6%A0%87%E8%AE%B0-%E6%B8%85%E9%99%A4%E6%B5%81%E7%A8%8B%E5%9B%BE%E7%A4%BA.png" alt="img.png"></p>
+
+    </div>
+    
+    
+    
+    <div id="comment">
+        <div id="gitalk-container"></div>
+    </div>
+    
+    
+    
+    
+    
+</div>
+
+                <footer id="footer">
+    <div id="footer-wrap">
+        <div>
+            &copy;
+            2023 - 2023 小鸡吃米
+            <span id="footer-icon">
+                <i class="fa-solid fa-font-awesome fa-fw"></i>
+            </span>
+            &commat;HuberyCool
+        </div>
+        <div>
+            Based on the <a target="_blank" rel="noopener" href="https://hexo.io">Hexo Engine</a> &amp;
+            <a target="_blank" rel="noopener" href="https://github.com/argvchs/hexo-theme-particlex">ParticleX Theme</a>
+        </div>
+        
+    </div>
+</footer>
+
+            </div>
+            </transition>
+            
+            <transition name="fade">
+            <div id="preview" ref="preview" v-show="previewShow">
+                <img id="preview-content" ref="previewContent" />
+            </div>
+            </transition>
+            
+        </div>
+        <script src="/js/main.js"></script>
+        
+        
+<script>
+    let clientID = "027fc91f4c543b96b6ac",
+        clientSecret = "9c96c34e744e446949239ea91761e907e6a5360e";
+    
+    const gitalk = new Gitalk({
+        clientID: clientID,
+        clientSecret: clientSecret,
+        repo: "myblogtalk",
+        owner: "huberyCool",
+        admin: ["huberyCool"],
+        language: "zh-CN",
+        id: location.pathname.substr(0, 50),
+        distractionFreeMode: false,
+        
+    })
+    gitalk.render("gitalk-container");
+</script>
+
+
+
+
+
+        
+    <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/shizuku.model.json"},"display":{"position":"right","width":200,"height":400},"mobile":{"show":false},"rect":"opacity:0.7","log":false,"pluginJsPath":"lib/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
+</html>
