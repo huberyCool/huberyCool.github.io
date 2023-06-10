@@ -3,7 +3,7 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
-        <title>Tags: git | 小鸡吃米</title>
+        <title>JVM上篇：垃圾回收器(12) | 小鸡吃米</title>
         <meta name="author" content="HuberyCool" />
         <meta name="description" content="" />
         <meta name="keywords" content="" />
@@ -41,6 +41,13 @@
 
 
 <script src="/js/lib/preview.js"></script>
+
+
+
+
+
+<script src="https://cdn.staticfile.org/gitalk/1.8.0/gitalk.min.js"></script>
+<link rel="stylesheet" href="https://cdn.staticfile.org/gitalk/1.8.0/gitalk.min.css" />
 
 
 
@@ -153,135 +160,64 @@
     </div>
 </nav>
 
-                <div id="archives">
-    
-    <div class="categories-tags">
+                <div class="article">
+    <div>
+        <h1>JVM上篇：垃圾回收器(12)</h1>
+    </div>
+    <div class="info">
+        <span class="date">
+            <span class="icon">
+                <i class="fa-solid fa-calendar fa-fw"></i>
+            </span>
+            2023/6/10
+        </span>
         
-        
-        <span>
-            <a href="/tags/hexo/" style="background: #03a9f4">
+        <span class="category">
+            <a href="/categories/JVM%E7%B3%BB%E5%88%97/">
                 <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
+                    <i class="fa-solid fa-bookmark fa-fw"></i>
                 </span>
-                hexo
+                JVM系列
             </a>
         </span>
         
         
-        
-        <span>
-            <a href="/tags/node-js/" style="background: #ffa2c4">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                node.js
-            </a>
+        <span class="tags">
+            <span class="icon">
+                <i class="fa-solid fa-tags fa-fw"></i>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/jvm/" style="color: #ffa2c4">jvm</a>
+            </span>
+            
+            <span class="tag">
+                
+                <a href="/tags/java/" style="color: #ff7d73">java</a>
+            </span>
+            
         </span>
-        
-        
-        
-        <span>
-            <a href="/tags/git/" style="background: linear-gradient(120deg, #9abbf7 0%, #ffbbf4 100%)">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                git
-            </a>
-        </span>
-        
-        
-        
-        
-        
-        <span>
-            <a href="/tags/gitee/" style="background: #03a9f4">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                gitee
-            </a>
-        </span>
-        
-        
-        
-        <span>
-            <a href="/tags/github/" style="background: #03a9f4">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                github
-            </a>
-        </span>
-        
-        
-        
-        <span>
-            <a href="/tags/jvm/" style="background: #ffa2c4">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                jvm
-            </a>
-        </span>
-        
-        
-        
-        <span>
-            <a href="/tags/java/" style="background: #03a9f4">
-                <span class="icon">
-                    <i class="fa-solid fa-tags fa-fw"></i>
-                </span>
-                java
-            </a>
-        </span>
-        
         
     </div>
     
-    <div class="timeline">
-        <div class="timeline-tail"></div>
-        <div class="timeline-content">
-            <div class="item-time">2023/3/27</div>
-            <a href="/2023/03/27/hexo/%E6%90%AD%E5%BB%BA%E4%B8%AA%E4%BA%BA%E5%8D%9A%E5%AE%A2-hexo(1)/">
-                <h3>快速搭建hexo个人博客(1)</h3>
-            </a>
-            <div class="info">
-                
-                <span class="category">
-                    <a href="/categories/hexo%E6%95%99%E7%A8%8B/">
-                        <span class="icon">
-                            <i class="fa-solid fa-bookmark fa-fw"></i>
-                        </span>
-                        hexo教程
-                    </a>
-                </span>
-                
-                
-                <span class="tags">
-                    <span class="icon">
-                        <i class="fa-solid fa-tags fa-fw"></i>
-                    </span>
-                    
-                    <span class="tag">
-                        
-                        <a href="/tags/hexo/" style="color: #00bcd4">hexo</a>
-                    </span>
-                    
-                    <span class="tag">
-                        
-                        <a href="/tags/node-js/" style="color: #00bcd4">node.js</a>
-                    </span>
-                    
-                    <span class="tag">
-                        
-                        <a href="/tags/git/" style="color: #00bcd4">git</a>
-                    </span>
-                    
-                </span>
-                
-            </div>
-        </div>
+    <div class="content" v-pre>
+        <p>接上一篇 <a href="/2023/06/08/jvm/JVM%E4%B8%8A%E7%AF%87-%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6%E7%90%86%E8%AE%BA(11)/">JVM上篇-垃圾回收理论(11)</a></p>
+<span id="more"></span>
+
+<h2 id="垃圾回收器"><a href="#垃圾回收器" class="headerlink" title="垃圾回收器"></a>垃圾回收器</h2><h3 id="1-GC分类和性能指标"><a href="#1-GC分类和性能指标" class="headerlink" title="1. GC分类和性能指标"></a>1. GC分类和性能指标</h3><h4 id="1-1-垃圾收集器分类"><a href="#1-1-垃圾收集器分类" class="headerlink" title="1.1 垃圾收集器分类"></a>1.1 垃圾收集器分类</h4><p><strong>按线程分，可以分为串行垃圾回收器和并行垃圾回收器</strong></p>
+
     </div>
+    
+    
+    
+    <div id="comment">
+        <div id="gitalk-container"></div>
+    </div>
+    
+    
+    
+    
     
 </div>
 
@@ -314,6 +250,30 @@
             
         </div>
         <script src="/js/main.js"></script>
+        
+        
+<script>
+    let clientID = "027fc91f4c543b96b6ac",
+        clientSecret = "9c96c34e744e446949239ea91761e907e6a5360e";
+    
+    const gitalk = new Gitalk({
+        clientID: clientID,
+        clientSecret: clientSecret,
+        repo: "myblogtalk",
+        owner: "huberyCool",
+        admin: ["huberyCool"],
+        language: "zh-CN",
+        id: location.pathname.substr(0, 50),
+        distractionFreeMode: false,
+        
+    })
+    gitalk.render("gitalk-container");
+</script>
+
+
+
+
+
         
     <script src="/live2dw/lib/L2Dwidget.min.js?094cbace49a39548bed64abff5988b05"></script><script>L2Dwidget.init({"pluginModelPath":"assets/","model":{"jsonPath":"/live2dw/assets/shizuku.model.json"},"display":{"position":"right","width":200,"height":400},"mobile":{"show":false},"rect":"opacity:0.7","log":false,"pluginJsPath":"lib/","pluginRootPath":"live2dw/","tagMode":false});</script></body>
 </html>
