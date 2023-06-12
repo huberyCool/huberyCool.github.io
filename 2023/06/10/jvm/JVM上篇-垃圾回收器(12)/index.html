@@ -189,12 +189,12 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #ff7d73">jvm</a>
+                <a href="/tags/jvm/" style="color: #ffa2c4">jvm</a>
             </span>
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #ffa2c4">java</a>
+                <a href="/tags/java/" style="color: #00bcd4">java</a>
             </span>
             
         </span>
@@ -450,6 +450,34 @@
 <li>标记完成后马上开始混合回收过程，对于一个混合回收期，G1从老年代区间移动存活对象到空闲区间，这些空闲区间也就称为了老年代的一部分。与年轻代不同，老年代的G1回收器不会去将整个老年代都回收一遍，一次只会扫描、回收一小部分老年代的region，这一小部分region是和年轻代一起被回收。</li>
 </ol>
 <p><strong>比如一个Web服务器，java进程最大堆内存为4G，每分钟响应1500个请求，每45秒会新分配大约2G的内存，G1会每45秒进行一次年轻代回收，每31小时整个堆的使用率会达到45%，会开始老年代并发标记过程，标记完成后开始四到五次的混合回收</strong></p>
+<h5 id="7-1-1-Remembered-Set"><a href="#7-1-1-Remembered-Set" class="headerlink" title="7.1.1 Remembered Set"></a>7.1.1 Remembered Set</h5><p><strong>背景</strong></p>
+<ul>
+<li>一个对象被不同区域引用的问题</li>
+<li>一个region不可能是孤立的，一个region中的对象可能被其他任何region中的对象引用，判断对象对象存活时，是否需要扫描整个java堆才能保证准确</li>
+<li>在其他的分代收集器中，也存在这样的问题，回收新生代也不得不同时扫描老年代，而G1内存空间被切分的更加零碎，所有这个问题尤为突出</li>
+</ul>
+<p><strong>解决方案</strong>  </p>
+<ol>
+<li>无论G1还是其他分代收集器，JVM都使用Remembered Set来避免全局扫描</li>
+<li>每个region都有一个对应的Remembered Set</li>
+<li>每次Reference类型数据写操作时，都会产生一个Write Barrier(写屏障)暂时中断操作</li>
+<li>然后检查将要写入的引用指向的对象是否和该Reference类型数据在不同的region(其他收集器的做法是，检查老年代对象是否引用了新生代对象)，如果不同，通过CardTable把相关引用信息记录到引用指向对象的所在region对应的Remembered Set中</li>
+<li>当垃圾收集时，在GC根节点的枚举范围加入Remembered Set，就可以保证不进行全局扫描的情况下，也不会有遗漏<br><img src="/../../images/jvm/RememberedSet%E7%9A%84%E4%BD%9C%E7%94%A8.png" alt="img.png"></li>
+</ol>
+<h4 id="7-2-G1回收过程解构"><a href="#7-2-G1回收过程解构" class="headerlink" title="7.2 G1回收过程解构"></a>7.2 G1回收过程解构</h4><h5 id="7-2-1-第一步：年轻代GC"><a href="#7-2-1-第一步：年轻代GC" class="headerlink" title="7.2.1 第一步：年轻代GC"></a>7.2.1 第一步：年轻代GC</h5><p>JVM启动时，G1准备好Eden区，程序在运行过程中不断创建对象到Eden区，当Eden区空间耗尽时，启动一次年轻代垃圾回收</p>
+<p>年轻代垃圾回收只会回收Eden区和S区</p>
+<p>首先G1会停止应用程序的线程，也就是触发STW机制，然后G1创建回收集(Collect Set)</p>
+<blockquote>
+<p>回收集是指需要被回收的内存分段集合，年轻代回收过程的回收集包含年轻代Eden区和S区所有的内存分段</p>
+</blockquote>
+<p>准备就绪后，开始如下回收过程</p>
+<ol>
+<li><em><strong>扫描根</strong></em> 根是指static变量指向的对象，正在执行的方法调用链条上的局部变量等。根引用连同RSet记录的外部引用作为扫描存活对象的入口</li>
+<li><em><strong>更新RSet</strong></em> 处理 <strong>dirty card queue</strong> 中的card，更新RSet。此阶段完成后，RSet可以准确的反应老年代对所在的内存分段中对象的引用</li>
+<li><em><strong>处理RSet</strong></em> 识别被老年代对象指向的Eden区中的对象，这些被指向的Eden区中的对象被认为是存活的对象</li>
+<li><em><strong>复制对象</strong></em> 此阶段，对象树被遍历。Eden区内存段中存活的对象会被复制到S区中空的内存分段，S区内存段中存活的对象如果年龄未达阈值，年龄会加1，如果达到阈值，会被复制到Old区中空的内存分段，如果S区空间不够，Eden空间的部分数据会直接晋升到Old区段</li>
+<li><em><strong>处理引用</strong></em> 处理Soft、Weak、Phantom、Final、JNI Weak等引用。最终Eden空间的数据为空，GC停止工作，而目标内存中的对象都是连续存储的，没有碎片，所以复制过程可以达到内存整理的效果，减少内存</li>
+</ol>
 
     </div>
     
