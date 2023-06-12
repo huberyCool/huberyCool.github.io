@@ -189,12 +189,12 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
+                <a href="/tags/jvm/" style="color: #03a9f4">jvm</a>
             </span>
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #ff7d73">java</a>
+                <a href="/tags/java/" style="color: #03a9f4">java</a>
             </span>
             
         </span>
@@ -343,6 +343,44 @@
 <li><em><strong>并发清除(Concurrent Sweep)</strong></em> 清理删除掉标记阶段判断的已经死亡的对象，释放内存空间。由于不需要移动存活对象，所以这个阶段GC线程可以和应用线程并发执行</li>
 </ul>
 <p><em><strong>尽管CMS收集器采用的是并发回收，也就是非独占式的回收方式，但是在最重要的初始标记和重新标记阶段仍然需要STW，所以不能说CMS完全取消了STW机制，只能说尽可能缩短了暂停时间，因为最耗时的并发标记和并发清除阶段是不需要STW的，所以整体的回收是低停顿的</strong></em></p>
+<p><em><strong>Concurrent Mode Failure</strong></em><br>由于在垃圾收集阶段用户线程没有中断，所以在CMS回收过程中，还应该确保应用程序有足够的内存可用。因此，CMS收集器不能像其他收集器那样等到老年代几乎完全被填满了再进行回收，而是当堆内存使用率达到某一阈值时，便开始进行回收，以确保应用程序在CMS工作过程中依然有足够<br>的空间支持应用程序运行。如果CMS运行期间预留的内存无法满足程序需要，就会出现一次Concurrent Mode Failure失败，此时，虚拟机将会启动后备方案，临时使用Serial Old收集器来重新进行老年代的垃圾回收，这样STW的时间会很长</p>
+<p>CMS收集器的垃圾收集算法采用的是标记-清除算法，这意味着每次执行完内存回收后，由于被执行内存回收的无用对象所占用的内存空间极有可能是不连续的有些内存块，不可避免地将会产生一些内存碎片，那么CMS在为新对象分配内存空间时，将无法使用指针碰撞技术，而只能使用空闲列表执行内存分配</p>
+<p><strong>优点</strong>  </p>
+<ul>
+<li>并发收集，主打一个低延迟</li>
+</ul>
+<p><strong>缺点</strong>  </p>
+<ul>
+<li>会产生内存碎片，后续如果有大对象产生的时候，就需要频繁的FullGC</li>
+<li>CMS对CPU资源非常敏感，在并发阶段，它虽然不会导致用户停顿，但是会因为占用了一部分线程而导致应用程序变慢，总吞吐量下降</li>
+<li>CMS无法处理浮动垃圾，在并发标记阶段由于程序的工作线程和GC线程在并发执行，那么在并行标记阶段产生的新垃圾是无法对其进行标记的，最终导致这些新的垃圾无法被及时清理掉，只能留到下次GC时再清理这些垃圾</li>
+<li>CMS一旦触发了Concurrent Mode Failure后，会由Serial Old接替进行这一次的老年代垃圾回收工作，这就导致这一次的垃圾回收会持续很长时间，会导致程序出现明显的延迟情况</li>
+</ul>
+<p><strong>CMS相关参数</strong>  </p>
+<ul>
+<li><em><strong>-XX:+UseConcMarkSweepGC</strong></em> 手动指定使用CMS收集器执行内存回收任务<blockquote>
+<p>开启这个参数后，会自动开启 -XX:+UseParNewGC，这样就会出现这样的组合： 年轻代是ParNew、老年代为CMS和Serial Old的组合</p>
+</blockquote>
+</li>
+<li><em><strong>-XX:CMSInitiatingOccupancyFraction</strong></em> 设置堆内存使用率的阈值，一旦达到这个阈值，便开始进行回收<ul>
+<li>JDK5及以前的版本默认是68，即当老年代的空间使用率达到68%，会执行CMS回收，JDK6及以后默认值是92</li>
+<li>如果内存增长缓慢，则可以设置一个稍点的值，大的阈值可以有效降低CMS的触发频率，减少老年代的垃圾回收次数可以明显的改善应用程序的性能。</li>
+<li>如果内存增长很快，则应该降低该值，以避免CMS因为内存不足导致Concurrent Mode Failure从而频繁激活串行收集器Serial Old</li>
+</ul>
+</li>
+<li><em><strong>-XX:+UseCMSCompactAtFullCollection</strong></em> 用于指定在执行完Full GC后对内存空间进行压缩整理，以避免内存碎片的产生，不过由于内存压缩无法做到并发执行，所以这一步的STW会变得很长</li>
+<li><em><strong>-XX:CMSFullGCsBeforeCompaction</strong></em> 设置在执行多少次Full GC后对内存进行压缩整理</li>
+<li><em><strong>-XX:ParallelCMSThreads</strong></em> 设置CMS的线程数量。CMS默认启动的线程数是 <em><strong>(ParallelGCThreads + 3) &#x2F; 4</strong></em> ，ParallelGCThreads是年轻代并行收集器的线程数，当CPU资源比较紧张时，受到CMS收集器线程的影响，应用程序的性能在垃圾回收阶段可能会非常差</li>
+</ul>
+<p><strong>小结</strong>  </p>
+<ul>
+<li>如果想要最小化使用内存和并行开销，使用Serial</li>
+<li>如果想要最大化应用程序的吞吐量，使用Parallel</li>
+<li>如果想要最小化GC的中断和停顿时间，使用CMS</li>
+</ul>
+<ol start="7">
+<li>G1回收器</li>
+</ol>
 
     </div>
     
