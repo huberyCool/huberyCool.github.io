@@ -189,7 +189,7 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #ffa2c4">jvm</a>
+                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
             </span>
             
             <span class="tag">
@@ -470,7 +470,7 @@
 <blockquote>
 <p>回收集是指需要被回收的内存分段集合，年轻代回收过程的回收集包含年轻代Eden区和S区所有的内存分段</p>
 </blockquote>
-<p>准备就绪后，开始如下回收过程</p>
+<p>准备就绪后，开始执行如下回收过程</p>
 <ol>
 <li><em><strong>扫描根</strong></em> 根是指static变量指向的对象，正在执行的方法调用链条上的局部变量等。根引用连同RSet记录的外部引用作为扫描存活对象的入口</li>
 <li><em><strong>更新RSet</strong></em> 处理 <strong>dirty card queue</strong> 中的card，更新RSet。此阶段完成后，RSet可以准确的反应老年代对所在的内存分段中对象的引用</li>
@@ -478,6 +478,19 @@
 <li><em><strong>复制对象</strong></em> 此阶段，对象树被遍历。Eden区内存段中存活的对象会被复制到S区中空的内存分段，S区内存段中存活的对象如果年龄未达阈值，年龄会加1，如果达到阈值，会被复制到Old区中空的内存分段，如果S区空间不够，Eden空间的部分数据会直接晋升到Old区段</li>
 <li><em><strong>处理引用</strong></em> 处理Soft、Weak、Phantom、Final、JNI Weak等引用。最终Eden空间的数据为空，GC停止工作，而目标内存中的对象都是连续存储的，没有碎片，所以复制过程可以达到内存整理的效果，减少内存</li>
 </ol>
+<p><strong>dirty card queue是什么</strong></p>
+<blockquote>
+<p>在JVM的垃圾回收中，标记-清除算法需要标记所有存活的对象，而对象图可能非常庞大，需要遍历大量的对象，造成较大的开销，因此，JVM引入了增量更新(Incremental Update)的技术，将全局标记和增量更新分离，减少了垃圾回收的停顿时间。<br>dirty card queue是增量更新中的一种实现，它用于记录堆内存中被修改的对象引用的位置。在程序运行过程中，当对象A的某个引用被修改为指向对象B时，JVM将这个修改操作记录到dirty card queue中，而不是马上去更新全局引用关系。<br>当垃圾回收器开始工作时，它只需要扫描dirty card queue中的引用，就可以找到被修改的对象，将它们标记位脏对象，并更新它们的引用关系。<br>使用dirty card queue可以极大地减少全局标记的时间，因为只需要标记修改过的对象及其引用的对象，而不需要遍历整个对象图。但同时dirty card queue也会带来一些额外的开销，因为需要记录被修改的对象的引用位置，并在垃圾回收时扫描和清理这些位置。<br>需要注意的是，dirty card queue 并不是所有JVM都使用的技术，而是部分JVM(如HotSpot)中增量更新的一种实现方式。不同的JVM可能会使用不同的增量更新技术来优化垃圾回收性能</p>
+</blockquote>
+<h5 id="7-2-2-第二步：并发标记过程"><a href="#7-2-2-第二步：并发标记过程" class="headerlink" title="7.2.2 第二步：并发标记过程"></a>7.2.2 第二步：并发标记过程</h5><ol>
+<li><em><strong>初始标记阶段</strong></em> 标记从根节点直接可达的对象，这个阶段将触发STW机制，并且会触发一次年轻代GC</li>
+<li><em><strong>根区域扫描(Root Region Scanning)</strong></em> G1扫描S区直接可达的老年代区域对象，并标记被引用的对象，这一过程必须在YoungGC之前完成</li>
+<li><em><strong>并发标记(Concurrent Marking)</strong></em> 在整个堆中进行并发标记，此过程可能被YoungGC打断。在并发标记阶段，若发现区域对象中的所有对象都是垃圾，那这个区域会被立即回收。同时并发标记过程中，会计算每个区域的对象活性(区域中存活对象的比例)</li>
+<li><em><strong>再次标记(Remark)</strong></em> 由于应用程序继续运行，需要修正上一次的标记结果，此时触发STW机制，G1中采用了比CMS更快的初始快照算法(SATB: snapshot-at-the-beginning)</li>
+<li><em><strong>独占清理(cleanup)</strong></em> 触发STW机制，计算各个区域的存活对象和GC回收比例，并进行排序，识别可以混合回收的区域，为下阶段做铺垫，这个阶段并不进行清理工作</li>
+<li><em><strong>并发清除阶段</strong></em> 识别并清理完全空闲的区域</li>
+</ol>
+<h5 id="7-2-3-第三步：混合回收"><a href="#7-2-3-第三步：混合回收" class="headerlink" title="7.2.3 第三步：混合回收"></a>7.2.3 第三步：混合回收</h5><p>当越来越多的对象晋升到老年代区域时，为了避免堆内存被耗尽，虚拟机会触发一个混合的垃圾收集器，即MixedGC，该算法并不是一个Old GC，除了回收整个年轻代区域，还会回收一部分老年代区域，这里面需要注意的是：针对老年代回收只是部分，也不是全部，可以选择针对那些老年代区域进行收集，<br>从而可以对垃圾回收的耗时进行控制，同时也要注意，Mixed GC不是Full GC</p>
 
     </div>
     
