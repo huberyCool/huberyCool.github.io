@@ -189,12 +189,12 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #00a596">jvm</a>
+                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
             </span>
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #ffa2c4">java</a>
+                <a href="/tags/java/" style="color: #ff7d73">java</a>
             </span>
             
         </span>
@@ -252,6 +252,97 @@
 <li><strong>并发回收器：</strong> CMS、 G1<br><img src="/../../images/jvm/7%E7%A7%8D%E6%94%B6%E9%9B%86%E5%99%A8%E4%B8%8E%E5%9E%83%E5%9C%BE%E5%88%86%E4%BB%A3%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB.png" alt="img.png"></li>
 </ul>
 <p>其中Serial、ParNew、Parallel Scavenge属于新生代收集器<br>Seral Old、Parallel Old、CMS属于老年代收集器<br>而G1则属于整堆收集器</p>
+<p>以上的收集器的组合如下<br><img src="/../../images/jvm/%E6%94%B6%E9%9B%86%E5%99%A8%E7%9A%84%E7%BB%84%E5%90%88.png" alt="img.png"></p>
+<ol>
+<li>可以看到有以下几种组合<ul>
+<li>Serial&#x2F;Serial Old</li>
+<li>Serial&#x2F;CMS -&gt; Serial Old</li>
+<li>ParNew&#x2F;Serial Old</li>
+<li>ParNew&#x2F;CMS -&gt; Serial Old</li>
+<li>Parallel Scavenge&#x2F;Serial Old</li>
+<li>Parallel Scavenge&#x2F;Parallel Old</li>
+<li>G1</li>
+</ul>
+</li>
+<li>Serial Old 作为CMS出现 Concurrent Mode Failure失败的后备预案</li>
+<li>由于为何和兼容性测试的成本，在JDK8时将Serial&#x2F;CMS、ParNew&#x2F;Serial Old这两个组合声明为废弃，并在JDK9中完全取消了这些组合的支持</li>
+<li>JDK14中则弃用了Parallel Scavenge&#x2F;Serial Old组合，同时删除了CMS</li>
+</ol>
+<h4 id="2-2-如何查看默认的垃圾收集器"><a href="#2-2-如何查看默认的垃圾收集器" class="headerlink" title="2.2 如何查看默认的垃圾收集器"></a>2.2 如何查看默认的垃圾收集器</h4><p>可以通过参数+XX:+PrintCommandLineFlags 查看命令行相关参数，这其中包括了使用的垃圾回收器<br>使用jinfo -flag 可以查看相关垃圾回收器参数，进程ID</p>
+<h3 id="3-Serial回收器"><a href="#3-Serial回收器" class="headerlink" title="3. Serial回收器"></a>3. Serial回收器</h3><p>Serial收集器时最基本、历史最悠久的垃圾回收器</p>
+<p>Serial收集器作为HotSpot中client模式下的默认新生代垃圾收集器</p>
+<p><em><strong>Serial收集器采用复制算法、串行回收和STW机制的方式执行内存回收</strong></em></p>
+<p>除了年轻代之外，Serial收集器还提供用户执行老年代垃圾收集的Serial Old收集器。Serial Old收集器同样也采用了串行回收和STW机制，其内存回收算法采用的是标记-压缩算法</p>
+<ul>
+<li>Serial Old是运行在client模式下默认的老年代的垃圾回收器</li>
+<li>Serial Old在Server模式下主要有两个用途<ol>
+<li>与新生代的Parallel Scavenge 配合使用</li>
+<li>作为老年代CMS收集器出现回收异常后的备选方案</li>
+</ol>
+</li>
+</ul>
+<p><strong>Serial回收器</strong><br><img src="/../../images/jvm/Serial%E5%9B%9E%E6%94%B6%E5%99%A8.png" alt="img.png"></p>
+<p><strong>Serial Old回收器</strong><br><img src="/../../images/jvm/Serial%20Old%E5%9B%9E%E6%94%B6%E5%99%A8.png" alt="img.png"></p>
+<p>这个收集器是一个单线程的收集器，但它的单线程的意义并不仅仅说明它只会使用一个CPU或一条收集线去完成垃圾收集工作，更重要的是在它进行垃圾收集时，还必须STW，直到它收集完成</p>
+<p>它的优势是 _<strong>简单高效</strong>_， 对于限定在单CPU的环境来说，Serial收集器由于没有线程交互的开销，专心做垃圾收集自然可以获得最高的单线程收集效率，运行在client模式下的虚拟机是个不错的选择</p>
+<p>在HotSpot虚拟机中，可以使用参数 <em><strong>-XX:+UseSerialGC</strong></em> 指定年轻代和老年代都使用串行收集器，也就是年轻代使用Serial，老年代使用Serial Old</p>
+<p><strong>总结</strong><br>在当前的资源背景下，对于交互较强的应用而言，这种垃圾收集器是不能接受的。一般在java web应用程序中是不会采用串行垃圾收集器的</p>
+<h3 id="4-ParNew回收器"><a href="#4-ParNew回收器" class="headerlink" title="4. ParNew回收器"></a>4. ParNew回收器</h3><p>ParNew是并行回收器，同样采用的是复制算法、STW机制，所以ParNew相当于Serial收集器的多线程版本，作用于新生代</p>
+<p>ParNew是很多JVM运行在Server模式下新生代的默认垃圾回收器，因为新生代回收次数频繁，使用并行收集更加高效<br><img src="/../../images/jvm/ParNew%E5%9B%9E%E6%94%B6%E5%99%A8.png" alt="img.png"></p>
+<p><strong><strong>但是ParNew收集器的效率并不总是比Serial的效率更高</strong></strong></p>
+<blockquote>
+<p>ParNew收集器运行在多CPU的环境下，由于可以充分利用多CPU、多核心等物理硬盘资源优势，可以更快的完成垃圾回收，提升程序吞吐量。但是在单个CPU的环境下，ParNew收集器不比Serial收集更高效。<br>虽然Serial收集器时基于串行回收，但是由于CPU不需要频繁做任务切换，因此可以有效避免多线程上下文切换过程中带来的额外开销</p>
+</blockquote>
+<p>在程序中，可以通过 <em><strong>-XX:+UseParNewGC</strong></em> 手动指定使用ParNew收集器执行内存回收任务，它表示年轻代使用并行收集器，不影响老年代。<br>通过设置 <em><strong>-XX:ParallelGCThreads</strong></em> 参数来限制线程数量，其默认开启和CPU个数相同的线程数</p>
+<h3 id="5-Parallel-Scavenge回收器"><a href="#5-Parallel-Scavenge回收器" class="headerlink" title="5. Parallel Scavenge回收器"></a>5. Parallel Scavenge回收器</h3><p>Parallel Scavenge收集器和ParNew收集器的属性几乎完全一致<br>Parallel Scavenge收集器相对于ParNew收集器的区别  </p>
+<ol>
+<li>Parallel Scavenge收集器的目标是达到一个 _<strong>可控制的吞吐量(Throughput)</strong>_， 因此它被称为吞吐量优先的垃圾收集器</li>
+<li>自适应调节策略也是Parallel Scavenge与ParNew一个重要区别</li>
+</ol>
+<p>高吞吐量可以高效率的利用CPU时间，尽快完成程序的运算任务，主要适合在后台运算而不需要太多交互的任务，因此常见于服务器环境中使用<br><img src="/../../images/jvm/Parallel%20Scavenge%E5%9B%9E%E6%94%B6%E5%99%A8.png" alt="img.png"></p>
+<p>Parallel Scavenge收集器在JDK1.6时提供了用户执行老年代垃圾收集的Parallel Old收集器，用来替代Serial Old收集器</p>
+<p>Parallel Old收集器采用了并行、标记-压缩算法和STW机制<br><img src="/../../images/jvm/Parallel%20Old%E6%94%B6%E9%9B%86%E5%99%A8.png" alt="img.png"></p>
+<p>因此，在程序吞吐量优先的应用场景中，Parallel Scavenge收集器和Parallel Old收集器组合，在Server模式下的内存回收性能很不错，Java8，默认的是此垃圾收集器</p>
+<p><em><strong>Parallel系列收集器的相关参数配置</strong></em></p>
+<ul>
+<li><em><strong>-XX:+UseParallelGC</strong></em> 手动指定年轻代使用Parallel Scavenge并行收集器执行内存回收任务</li>
+<li><em><strong>-XX:+UseParallelOldGC</strong></em> 手动指定老年代使用Parallel Old 并行收集器执行内存回收任务<ul>
+<li>jdk8是默认开启的</li>
+<li>上面两个参数，默认开启一个，另一个也会被开启(相互激活)</li>
+</ul>
+</li>
+<li><em><strong>-XX:ParallelGCThreads</strong></em> 设置年轻代并行收集器的线程数，一般情况下，最好与CPU数量相等，以避免过多的线程数影响垃圾回收性能<ul>
+<li>当CPU的数量不大于8时，ParallelGCThreads设置为 <em><strong>CPU的数量</strong></em> 即可</li>
+<li>当大于8后，ParallelGCThreads设置为 <em><strong>3 + (5 * CPU的数量 &#x2F; 8)</strong></em></li>
+</ul>
+</li>
+<li><em><strong>-XX:MaxGCPauseMillis</strong></em> 设置垃圾收集器最大停顿时间(也就是STW的时间)，单位是毫秒<ul>
+<li>为了尽可能控制STW时间在这个范围内，收集器在工作时，会调整堆大小或者其他一些参数</li>
+<li>对于用户来讲，STW时间越短体验越好。但是在服务器端，除了STW，还需要关注高并发、吞吐量，所以Server模式下适合使用Parallel，对相关数据进行控制，以达到效果平衡</li>
+</ul>
+</li>
+<li><em><strong>-XX:GCTimeRatio</strong></em> 垃圾收集时间占总时间的比例(x &#x2F; N + x)。用于衡量吞吐量的大小<ul>
+<li>取值范围(0, 100)，默认为99，也就是垃圾回收时间不超过1%(1 &#x2F; 99 + 1)</li>
+<li>与MaxGCPauseMillis参数大小成反比，MaxGCPauseMillis越大，GCTimeRatio就越小</li>
+</ul>
+</li>
+<li><em><strong>-XX:+UseAdaptivesizePolicy</strong></em> 设置Parallel Scavenge收集器具有自适应调节策略<ul>
+<li>在这种模式下，年轻代的大小，Eden和S区的比例、晋升老年代的对象年龄等参数会被自动调整，已达到在堆大小】吞吐量和停顿时间直接的平衡点</li>
+<li>在手动调优比较困难的场合，可以直接使用这种自适应的方式，仅指定虚拟机的最大堆、目标的吞吐量和停顿时间，让虚拟机自己完成调优工作</li>
+</ul>
+</li>
+</ul>
+<h3 id="6-CMS回收器"><a href="#6-CMS回收器" class="headerlink" title="6. CMS回收器"></a>6. CMS回收器</h3><p>CMS(Concurrent-Mark-Sweep)收集器，是HotSpot VM中第一款真正意义上的并发收集器，它第一次实现了让垃圾收集器与用户线程同时工作</p>
+<p>CMS收集器的关注点是尽可能缩短垃圾收集时用户线程的同步时间。</p>
+<p>CMS的垃圾收集算法采用的是标记-清除算法，并且也使用了STW机制<br><img src="/../../images/jvm/CMS%E5%9B%9E%E6%94%B6%E5%99%A8.png" alt="img.png"></p>
+<p><em><strong>回收阶段</strong></em></p>
+<ul>
+<li><em><strong>初始标记(Initial Mark)</strong></em> 在这个阶段中，程序中所有的工作线程会被暂停(STW机制)，这个阶段的主要任务仅仅只是标记出GCRoots能直接关联到的对象。一旦标记完成之后，就会恢复之前被暂停的所有应用线程。由于直接关联的对象比较少，所以这里的速度非常快，STW时间会非常短</li>
+<li><em><strong>并发标记(Concurrent Mark)</strong></em> 从GCRoots的直接关联对象开始遍历整个对象图的过程，这个过程耗时较长，但是这个过程并没有STW，所以并不影响应用程序线程的运行</li>
+<li><em><strong>重新标记(Remark)</strong></em> 由于在并发标记阶段中，应用线程和GC线程交替运行，因此为了修正并发标记期间，因应用线程继续运行而导致标记产生变动的那一部分对象的标记记录，这个阶段的STW时间通常会比初始标记时间稍长，但也远比并发标记的时间短</li>
+<li><em><strong>并发清除(Concurrent Sweep)</strong></em> 清理删除掉标记阶段判断的已经死亡的对象，释放内存空间。由于不需要移动存活对象，所以这个阶段GC线程可以和应用线程并发执行</li>
+</ul>
+<p><em><strong>尽管CMS收集器采用的是并发回收，也就是非独占式的回收方式，但是在最重要的初始标记和重新标记阶段仍然需要STW，所以不能说CMS完全取消了STW机制，只能说尽可能缩短了暂停时间，因为最耗时的并发标记和并发清除阶段是不需要STW的，所以整体的回收是低停顿的</strong></em></p>
 
     </div>
     
