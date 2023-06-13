@@ -189,12 +189,12 @@
             
             <span class="tag">
                 
-                <a href="/tags/jvm/" style="color: #00bcd4">jvm</a>
+                <a href="/tags/jvm/" style="color: #03a9f4">jvm</a>
             </span>
             
             <span class="tag">
                 
-                <a href="/tags/java/" style="color: #00bcd4">java</a>
+                <a href="/tags/java/" style="color: #03a9f4">java</a>
             </span>
             
         </span>
@@ -499,10 +499,92 @@
 <p>要避免Full GC的发生，一旦发生，就需要进行调整</p>
 <p><strong>导致G1 Full GC的原因可能有两个</strong></p>
 <ul>
-<li>回放阶段(Evacuation)的时候没有足够的to-space来存放晋升的对象</li>
+<li>回收阶段(Evacuation)的时候没有足够的to-space来存放晋升的对象</li>
 <li>并发处理过程完成之前空间耗尽</li>
 </ul>
 <p>遇到以上情况后，G1就会回退到Full GC，以上情况可以通过增大内存解决</p>
+<p><strong>补充</strong><br>回收阶段其实本也有想过设计成与用户程序一起并发执行，但这件事情做起来比较复杂，考虑到G1每次只是回收一部分region，暂停时间是用户控制的，所以该实现并不迫切。最终将这一特性实现的是G1之后出现的低延迟垃圾收集器(ZGC)，另外还考虑到G1不仅仅面向低延迟，停顿用户线程能够忒大幅度提高垃圾收集效率，<br>为了保证吞吐量所以才选择了完全暂停用户线程的实现方案</p>
+<p><strong>G1优化建议</strong>  </p>
+<ul>
+<li>年轻代<ul>
+<li>避免使用 <em><strong>-Xmn</strong></em> 或 <em><strong>-XX:NewRatio</strong></em> 等相关选项显式设置年轻代大小</li>
+<li>固定年轻代的大小会覆盖暂停时间目标</li>
+</ul>
+</li>
+<li>暂停时间目标不要太过苛刻<ul>
+<li>G1的吞吐量目标是90%的应用程序时间和10%的垃圾回收时间</li>
+<li>暂停时间目标太苛刻表示你愿意承受更多的垃圾回收开销，而这些会直接影响到吞吐量</li>
+</ul>
+</li>
+</ul>
+<h3 id="8-7种经典的垃圾回收器总结"><a href="#8-7种经典的垃圾回收器总结" class="headerlink" title="8. 7种经典的垃圾回收器总结"></a>8. 7种经典的垃圾回收器总结</h3><table>
+<thead>
+<tr>
+<th align="left">垃圾收集器</th>
+<th align="left">运行方式</th>
+<th align="left">作用位置</th>
+<th align="left">使用算法</th>
+<th align="left">特点</th>
+<th align="left">适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left">Serial</td>
+<td align="left">串行运行</td>
+<td align="left">新生代</td>
+<td align="left">复制算法</td>
+<td align="left">响应速度优先</td>
+<td align="left">适用于单CPU环境下的client模式</td>
+</tr>
+<tr>
+<td align="left">ParNew</td>
+<td align="left">并行运行</td>
+<td align="left">新生代</td>
+<td align="left">复制算法</td>
+<td align="left">响应速度优先</td>
+<td align="left">多CPU环境Server模式下与CMS配合使用</td>
+</tr>
+<tr>
+<td align="left">Parallel</td>
+<td align="left">并行运行</td>
+<td align="left">新生代</td>
+<td align="left">复制算法</td>
+<td align="left">吞吐量优先</td>
+<td align="left">适用于后台运算而不需要太多交互的场景</td>
+</tr>
+<tr>
+<td align="left">Serial Old</td>
+<td align="left">串行运行</td>
+<td align="left">老年代</td>
+<td align="left">标记-压缩算法</td>
+<td align="left">响应速度优先</td>
+<td align="left">适用于单CPU环境下的client模式</td>
+</tr>
+<tr>
+<td align="left">Parallel Old</td>
+<td align="left">并行执行</td>
+<td align="left">老年代</td>
+<td align="left">标记-压缩算法</td>
+<td align="left">吞吐量优先</td>
+<td align="left">适用于后台运算而不需要太多交互的场景</td>
+</tr>
+<tr>
+<td align="left">CMS</td>
+<td align="left">并发执行</td>
+<td align="left">老年代</td>
+<td align="left">标记-清除算法</td>
+<td align="left">响应速度优先</td>
+<td align="left">适用于互联网或B&#x2F;S业务</td>
+</tr>
+<tr>
+<td align="left">G1</td>
+<td align="left">并行、并发执行</td>
+<td align="left">作用于整堆</td>
+<td align="left">标记-压缩算法、复制算法</td>
+<td align="left">响应速度优先</td>
+<td align="left">面向服务端应用</td>
+</tr>
+</tbody></table>
 
     </div>
     
